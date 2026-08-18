@@ -1,0 +1,355 @@
+@import 'tailwindcss';
+
+@theme {
+  /* ===== COLOR PALETTE: Warm & Organic ===== */
+
+  /* Earth - Primary neutral, warm cream to rich brown */
+  --color-earth-50: #faf8f5;
+  --color-earth-100: #f5f0e8;
+  --color-earth-200: #e8dfd2;
+  --color-earth-300: #d4c4af;
+  --color-earth-400: #bda68a;
+  --color-earth-500: #a6896b;
+  --color-earth-600: #8f7058;
+  --color-earth-700: #735847;
+  --color-earth-800: #5a4538;
+  --color-earth-900: #2d2419;
+  --color-earth-950: #1a150e;
+
+  /* Terracotta - Primary accent, warm and inviting */
+  --color-terracotta-50: #fef6f3;
+  --color-terracotta-100: #fde9e3;
+  --color-terracotta-200: #fbd5c9;
+  --color-terracotta-300: #f7b5a0;
+  --color-terracotta-400: #f08b6b;
+  --color-terracotta-500: #c4704a;
+  --color-terracotta-600: #a85a3a;
+  --color-terracotta-700: #8c472e;
+  --color-terracotta-800: #733b27;
+  --color-terracotta-900: #5f3223;
+  --color-terracotta-950: #331810;
+
+  /* Sage - Secondary accent, calming and natural */
+  --color-sage-50: #f4f7f5;
+  --color-sage-100: #e6ede8;
+  --color-sage-200: #cddcd2;
+  --color-sage-300: #a8c3b0;
+  --color-sage-400: #7c9a82;
+  --color-sage-500: #5e7d64;
+  --color-sage-600: #4a6550;
+  --color-sage-700: #3d5242;
+  --color-sage-800: #334337;
+  --color-sage-900: #2b382e;
+  --color-sage-950: #161e19;
+
+  /* Sand - Warm background accent */
+  --color-sand-50: #fdfcfa;
+  --color-sand-100: #faf7f2;
+  --color-sand-200: #f4ede2;
+  --color-sand-300: #ebe0ce;
+  --color-sand-400: #deccb0;
+  --color-sand-500: #d1b892;
+  --color-sand-600: #c2a070;
+  --color-sand-700: #a98555;
+  --color-sand-800: #8a6d47;
+  --color-sand-900: #715a3c;
+  --color-sand-950: #3c2f1e;
+
+  /* Semantic Colors */
+  --color-success-50: #f0fdf4;
+  --color-success-500: #22c55e;
+  --color-success-600: #16a34a;
+  --color-success-700: #15803d;
+
+  --color-error-50: #fef2f2;
+  --color-error-500: #ef4444;
+  --color-error-600: #dc2626;
+  --color-error-700: #b91c1c;
+
+  --color-warning-50: #fffbeb;
+  --color-warning-500: #f59e0b;
+  --color-warning-600: #d97706;
+
+  /* ===== TYPOGRAPHY ===== */
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-body: 'DM Sans', system-ui, sans-serif;
+
+  /* Font Sizes with line heights */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.25rem;
+  --text-5xl: 3rem;
+  --text-6xl: 3.75rem;
+  --text-7xl: 4.5rem;
+
+  /* ===== SPACING ===== */
+  --spacing-px: 1px;
+  --spacing-0: 0;
+  --spacing-0_5: 0.125rem;
+  --spacing-1: 0.25rem;
+  --spacing-1_5: 0.375rem;
+  --spacing-2: 0.5rem;
+  --spacing-2_5: 0.625rem;
+  --spacing-3: 0.75rem;
+  --spacing-3_5: 0.875rem;
+  --spacing-4: 1rem;
+  --spacing-5: 1.25rem;
+  --spacing-6: 1.5rem;
+  --spacing-7: 1.75rem;
+  --spacing-8: 2rem;
+  --spacing-9: 2.25rem;
+  --spacing-10: 2.5rem;
+  --spacing-11: 2.75rem;
+  --spacing-12: 3rem;
+  --spacing-14: 3.5rem;
+  --spacing-16: 4rem;
+  --spacing-20: 5rem;
+  --spacing-24: 6rem;
+  --spacing-28: 7rem;
+  --spacing-32: 8rem;
+
+  /* ===== BORDER RADIUS ===== */
+  --radius-none: 0;
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+  --radius-3xl: 1.5rem;
+  --radius-full: 9999px;
+
+  /* ===== SHADOWS ===== */
+  --shadow-xs: 0 1px 2px 0 rgb(45 36 25 / 0.05);
+  --shadow-sm: 0 1px 3px 0 rgb(45 36 25 / 0.1), 0 1px 2px -1px rgb(45 36 25 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(45 36 25 / 0.1), 0 2px 4px -2px rgb(45 36 25 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(45 36 25 / 0.1), 0 4px 6px -4px rgb(45 36 25 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(45 36 25 / 0.1), 0 8px 10px -6px rgb(45 36 25 / 0.1);
+  --shadow-2xl: 0 25px 50px -12px rgb(45 36 25 / 0.25);
+  --shadow-inner: inset 0 2px 4px 0 rgb(45 36 25 / 0.05);
+
+  /* Organic shadows with warm tint */
+  --shadow-organic-sm: 0 2px 8px -2px rgb(196 112 74 / 0.12), 0 1px 3px -1px rgb(45 36 25 / 0.08);
+  --shadow-organic-md: 0 4px 16px -4px rgb(196 112 74 / 0.15), 0 2px 6px -2px rgb(45 36 25 / 0.1);
+  --shadow-organic-lg: 0 8px 24px -6px rgb(196 112 74 / 0.18), 0 4px 10px -4px rgb(45 36 25 / 0.12);
+
+  /* ===== TRANSITIONS ===== */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-back: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-in-out-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+
+  --duration-fast: 150ms;
+  --duration-normal: 200ms;
+  --duration-slow: 300ms;
+  --duration-slower: 500ms;
+}
+
+/* ===== BASE STYLES ===== */
+body {
+  @apply m-0 antialiased;
+  font-family: var(--font-body);
+  background-color: var(--color-earth-50);
+  color: var(--color-earth-900);
+}
+
+#app {
+  @apply min-h-dvh;
+}
+
+/* ===== TYPOGRAPHY UTILITIES ===== */
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-body {
+  font-family: var(--font-body);
+}
+
+/* ===== ANIMATION KEYFRAMES ===== */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in-down {
+  from {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
+    transform: translateX(-4px);
+  }
+  20%,
+  40%,
+  60%,
+  80% {
+    transform: translateX(4px);
+  }
+}
+
+@keyframes pulse-soft {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+/* ===== ANIMATION UTILITIES ===== */
+.animate-fade-in {
+  animation: fade-in var(--duration-normal) var(--ease-out-expo) forwards;
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up var(--duration-slow) var(--ease-out-expo) forwards;
+}
+
+.animate-fade-in-down {
+  animation: fade-in-down var(--duration-slow) var(--ease-out-expo) forwards;
+}
+
+.animate-scale-in {
+  animation: scale-in var(--duration-normal) var(--ease-out-back) forwards;
+}
+
+.animate-shake {
+  animation: shake 0.5s ease-in-out;
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 2s ease-in-out infinite;
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+/* Stagger delay utilities */
+.stagger-1 {
+  animation-delay: 50ms;
+}
+.stagger-2 {
+  animation-delay: 100ms;
+}
+.stagger-3 {
+  animation-delay: 150ms;
+}
+.stagger-4 {
+  animation-delay: 200ms;
+}
+.stagger-5 {
+  animation-delay: 250ms;
+}
+.stagger-6 {
+  animation-delay: 300ms;
+}
+
+/* ===== TEXTURE OVERLAYS ===== */
+.texture-noise {
+  position: relative;
+}
+
+.texture-noise::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  opacity: 0.03;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+}
+
+/* ===== FOCUS STYLES ===== */
+.focus-ring {
+  @apply outline-none;
+  transition: box-shadow var(--duration-fast) var(--ease-in-out-smooth);
+}
+
+.focus-ring:focus-visible {
+  box-shadow:
+    0 0 0 2px var(--color-earth-50),
+    0 0 0 4px var(--color-terracotta-500);
+}
+
+/* ===== SCROLLBAR STYLING ===== */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-earth-100);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-earth-300);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-earth-400);
+}
+
+/* ===== SELECTION STYLING ===== */
+::selection {
+  background-color: var(--color-terracotta-200);
+  color: var(--color-earth-900);
+}
