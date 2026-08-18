@@ -15,15 +15,15 @@ Follow these rules:
 
 3. **Match visual details precisely**, including but not limited to:
 
-   * spacing and layout
-   * padding and margins
-   * colors
-   * font sizes and weights
-   * border radii
-   * borders and shadows
-   * alignment
-   * icon placement
-   * component proportions
+   - spacing and layout
+   - padding and margins
+   - colors
+   - font sizes and weights
+   - border radii
+   - borders and shadows
+   - alignment
+   - icon placement
+   - component proportions
 
 4. **Do not introduce new UI patterns** unless they are clearly visible in the design.
 
@@ -33,11 +33,11 @@ Follow these rules:
 
 7. **Follow the patterns already used in this codebase**, including:
 
-   * component structure
-   * naming conventions
-   * styling patterns
-   * utilities and helper functions
-   * existing design tokens
+   - component structure
+   - naming conventions
+   - styling patterns
+   - utilities and helper functions
+   - existing design tokens
 
 8. **Reuse existing components whenever possible** rather than inventing new ones, as long as the final UI still matches the design exactly.
 

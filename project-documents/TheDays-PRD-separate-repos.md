@@ -10,12 +10,12 @@ Unlike traditional streak-based habit trackers, missing a day does not reset pre
 
 For example:
 
-* Day 1: Completed
-* Day 2: Completed
-* Day 3: Missed
-* Day 4: Completed
-* Day 5: Missed
-* Day 6: Completed
+- Day 1: Completed
+- Day 2: Completed
+- Day 3: Missed
+- Day 4: Completed
+- Day 5: Missed
+- Day 6: Completed
 
 The resulting TheDays is:
 
@@ -46,18 +46,18 @@ The application should enable users to:
 
 The initial version of the product will not include:
 
-* Social features.
-* Following other users.
-* Public profiles.
-* Leaderboards.
-* Traditional streak tracking.
-* Native mobile applications.
-* Push notifications.
-* Gamification points.
-* AI-generated recommendations.
-* Shared or collaborative trackers.
-* Complex analytics.
-* Third-party calendar integrations.
+- Social features.
+- Following other users.
+- Public profiles.
+- Leaderboards.
+- Traditional streak tracking.
+- Native mobile applications.
+- Push notifications.
+- Gamification points.
+- AI-generated recommendations.
+- Shared or collaborative trackers.
+- Complex analytics.
+- Third-party calendar integrations.
 
 These capabilities may be considered in later versions.
 
@@ -69,9 +69,9 @@ The MVP will be delivered as a responsive web application.
 
 The application should support:
 
-* Desktop browsers.
-* Tablet browsers.
-* Mobile browsers.
+- Desktop browsers.
+- Tablet browsers.
+- Mobile browsers.
 
 The mobile experience should be optimized for quick daily interactions. For a Practice TheDays, that action is marking the current day as completed. For an Abstinence TheDays, that action is marking the most recent finished day (usually yesterday) after the calendar day has ended.
 
@@ -83,11 +83,11 @@ The mobile experience should be optimized for quick daily interactions. For a Pr
 
 The frontend should use:
 
-* React
-* Vite
-* TypeScript
-* TanStack Router
-* TanStack Query
+- React
+- Vite
+- TypeScript
+- TanStack Router
+- TanStack Query
 
 ### React
 
@@ -118,14 +118,14 @@ Suggested application routes include:
 
 TanStack Query should manage asynchronous server state, including:
 
-* Fetching tracker data.
-* Fetching completed days.
-* Fetching landmarks.
-* Caching API responses.
-* Updating data after mutations.
-* Loading states.
-* Error states.
-* Optimistic UI updates where appropriate.
+- Fetching tracker data.
+- Fetching completed days.
+- Fetching landmarks.
+- Caching API responses.
+- Updating data after mutations.
+- Loading states.
+- Error states.
+- Optimistic UI updates where appropriate.
 
 ---
 
@@ -133,9 +133,9 @@ TanStack Query should manage asynchronous server state, including:
 
 The backend should use:
 
-* Node.js
-* Express
-* TypeScript
+- Node.js
+- Express
+- TypeScript
 
 The backend should expose a REST API consumed by the React frontend.
 
@@ -186,22 +186,22 @@ User
 
 A relational database is suitable because:
 
-* A user owns many trackers.
-* A tracker belongs to one user.
-* A tracker has many completed days.
-* A tracker has many landmarks.
-* Referential integrity is important.
-* Duplicate completion records must be prevented.
-* Ownership relationships must be enforced.
+- A user owns many trackers.
+- A tracker belongs to one user.
+- A tracker has many completed days.
+- A tracker has many landmarks.
+- Referential integrity is important.
+- Duplicate completion records must be prevented.
+- Ownership relationships must be enforced.
 
 PostgreSQL also provides strong support for:
 
-* Constraints.
-* Transactions.
-* Indexing.
-* Date handling.
-* Relational queries.
-* Production-scale deployments.
+- Constraints.
+- Transactions.
+- Indexing.
+- Date handling.
+- Relational queries.
+- Production-scale deployments.
 
 ---
 
@@ -225,15 +225,15 @@ PostgreSQL
 
 Prisma should be used for:
 
-* Database schema definitions.
-* Database migrations.
-* Queries.
-* Inserts.
-* Updates.
-* Deletes.
-* Relations.
-* Unique constraints.
-* Referential actions.
+- Database schema definitions.
+- Database migrations.
+- Queries.
+- Inserts.
+- Updates.
+- Deletes.
+- Relations.
+- Unique constraints.
+- Referential actions.
 
 ---
 
@@ -241,24 +241,26 @@ Prisma should be used for:
 
 Users must be able to:
 
-* Register.
-* Log in.
-* Log out.
-* Remain authenticated across page refreshes and browser sessions, according to session policy.
+- Register.
+- Log in.
+- Log out.
+- Remain authenticated across page refreshes and browser sessions, according to session policy.
 
 ## Registration
 
 Required registration fields:
 
-* Name
-* Email
-* Password
+- Username
+- Email
+- Password
 
 or
 
 Google Auth
 
 The email address must be unique.
+
+The username must be unique. Usernames are normalized to lowercase, must be 3–30 characters, start with a letter, and contain only lowercase letters, numbers, and underscores. Reserved usernames (such as `admin` and `support`) are rejected.
 
 Passwords must never be stored in plain text.
 
@@ -272,9 +274,9 @@ The recommended authentication approach is cookie-based authentication using sec
 
 Authentication cookies should be configured with appropriate production settings such as:
 
-* `HttpOnly`
-* `Secure`
-* `SameSite`
+- `HttpOnly`
+- `Secure`
+- `SameSite`
 
 Authentication credentials should not be stored in browser `localStorage`.
 
@@ -290,7 +292,7 @@ The user entity should contain:
 User
 
 id
-name
+username
 email
 passwordHash
 timezone
@@ -303,7 +305,7 @@ Example:
 ```ts
 {
   id: "user_123",
-  name: "Example User",
+  username: "example_user",
   email: "user@example.com",
   passwordHash: "...",
   timezone: "Africa/Lagos",
@@ -342,13 +344,13 @@ A user should be able to create a TheDays with the following fields.
 
 ### Required
 
-* Title
-* Start date
-* Completion mode
+- Title
+- Start date
+- Completion mode
 
 ### Optional
 
-* Description
+- Description
 
 Completion mode has two values. The create form must require an explicit choice. There is no default.
 
@@ -490,15 +492,15 @@ The TheDays is cumulative rather than consecutive.
 
 The following rules apply:
 
-* Every completed day adds exactly one to the total.
-* Every incomplete day adds zero.
-* Missing a day does not reset the total.
-* Completing a later day continues from the existing total.
-* Unchecking a previously completed day decreases the total by one.
-* The same date must never contribute more than one to the total.
-* Completing today is allowed only on a Practice TheDays.
-* On an Abstinence TheDays, a day cannot be marked complete until that calendar day has ended in the user's timezone.
-* Unmarking an existing completion is allowed in both modes.
+- Every completed day adds exactly one to the total.
+- Every incomplete day adds zero.
+- Missing a day does not reset the total.
+- Completing a later day continues from the existing total.
+- Unchecking a previously completed day decreases the total by one.
+- The same date must never contribute more than one to the total.
+- Completing today is allowed only on a Practice TheDays.
+- On an Abstinence TheDays, a day cannot be marked complete until that calendar day has ended in the user's timezone.
+- Unmarking an existing completion is allowed in both modes.
 
 Example:
 
@@ -629,8 +631,8 @@ The backend must verify:
 4. The date is valid.
 5. The date is not earlier than the tracker start date.
 6. The date is allowed for the tracker's completion mode:
-   * Practice: the date is on or before today in the user's timezone (`startDate <= date <= today`).
-   * Abstinence: the date is strictly before today in the user's timezone (`startDate <= date < today`).
+   - Practice: the date is on or before today in the user's timezone (`startDate <= date <= today`).
+   - Abstinence: the date is strictly before today in the user's timezone (`startDate <= date < today`).
 7. The date has not already been recorded as completed.
 
 If validation succeeds, a completed day record should be created.
@@ -695,8 +697,8 @@ Each date becomes available in the list automatically when it becomes the user's
 
 Today is always displayed.
 
-* On a Practice TheDays, today may be marked complete.
-* On an Abstinence TheDays, today is visible and disabled until the calendar day has ended. The primary daily action is the most recent finished day, usually yesterday.
+- On a Practice TheDays, today may be marked complete.
+- On an Abstinence TheDays, today is visible and disabled until the calendar day has ended. The primary daily action is the most recent finished day, usually yesterday.
 
 If an Abstinence TheDays has a start date of today, no date is completable until tomorrow. The interface should explain that the first day becomes available after it ends, rather than appearing empty or broken.
 
@@ -706,8 +708,8 @@ If an Abstinence TheDays has a start date of today, no date is completable until
 
 The start date may be:
 
-* The current date.
-* Any valid date in the past.
+- The current date.
+- Any valid date in the past.
 
 A future start date should not be allowed in the MVP.
 
@@ -742,18 +744,18 @@ Example route:
 
 The page should display:
 
-* Title.
-* Description.
-* Completion mode.
-* Current TheDays.
-* Start date.
-* The primary daily completion control (today on Practice; the latest finished day on Abstinence).
-* Today's state (completable, completed, or in progress / not yet completable).
-* Upcoming landmark.
-* Day history.
-* Landmarks.
-* Edit action.
-* Delete action.
+- Title.
+- Description.
+- Completion mode.
+- Current TheDays.
+- Start date.
+- The primary daily completion control (today on Practice; the latest finished day on Abstinence).
+- Today's state (completable, completed, or in progress / not yet completable).
+- Upcoming landmark.
+- Day history.
+- Landmarks.
+- Edit action.
+- Delete action.
 
 Example header:
 
@@ -874,13 +876,13 @@ The dashboard should display all TheDayss owned by the user.
 
 Each tracker card should include:
 
-* Tracker title.
-* Completion mode.
-* Current TheDays.
-* Start date.
-* Daily completion status for the mode (today on Practice; today in progress plus yesterday / latest finished day on Abstinence).
-* Next landmark, if applicable.
-* Remaining completed days required to reach the next landmark.
+- Tracker title.
+- Completion mode.
+- Current TheDays.
+- Start date.
+- Daily completion status for the mode (today on Practice; today in progress plus yesterday / latest finished day on Abstinence).
+- Next landmark, if applicable.
+- Remaining completed days required to reach the next landmark.
 
 Practice example:
 
@@ -952,12 +954,12 @@ A landmark should contain:
 
 ### Required
 
-* Target TheDays
-* Celebration description
+- Target TheDays
+- Celebration description
 
 ### Optional
 
-* Title
+- Title
 
 Example:
 
@@ -1085,11 +1087,11 @@ Take a weekend trip
 
 Users should be able to:
 
-* Add landmarks.
-* Edit landmarks.
-* Delete landmarks.
-* View upcoming landmarks.
-* View reached landmarks.
+- Add landmarks.
+- Edit landmarks.
+- Delete landmarks.
+- View upcoming landmarks.
+- View reached landmarks.
 
 ---
 
@@ -1149,8 +1151,8 @@ Every tracker request must verify ownership.
 
 The same ownership rules must apply to:
 
-* Completed days.
-* Landmarks.
+- Completed days.
+- Landmarks.
 
 Frontend route protection alone must not be considered sufficient security.
 
@@ -1185,7 +1187,7 @@ A suitable initial Prisma schema could resemble:
 ```prisma
 model User {
   id           String    @id @default(cuid())
-  name         String
+  username     String    @unique @db.VarChar(30)
   email        String    @unique
   passwordHash String
   timezone     String
@@ -1321,7 +1323,7 @@ Example body:
 
 ```json
 {
-  "name": "Example User",
+  "username": "example_user",
   "email": "user@example.com",
   "password": "..."
 }
@@ -1428,12 +1430,7 @@ Example response:
 
 ```json
 {
-  "completedDays": [
-    "2026-08-12",
-    "2026-08-13",
-    "2026-08-15",
-    "2026-08-16"
-  ]
+  "completedDays": ["2026-08-12", "2026-08-13", "2026-08-15", "2026-08-16"]
 }
 ```
 
@@ -1495,11 +1492,11 @@ helmet
 
 Additional libraries may be introduced for:
 
-* Rate limiting.
-* Logging.
-* Environment variable validation.
-* Testing.
-* Session storage.
+- Rate limiting.
+- Logging.
+- Environment variable validation.
+- Testing.
+- Session storage.
 
 ---
 
@@ -1516,8 +1513,8 @@ const createTrackerSchema = z.object({
   title: z.string().min(1).max(100),
   description: z.string().max(1000).optional(),
   startDate: z.string(),
-  completionMode: z.enum(["practice", "abstinence"]),
-});
+  completionMode: z.enum(['practice', 'abstinence']),
+})
 ```
 
 Frontend validation should improve user experience, but the backend must independently validate all incoming data.
@@ -1574,7 +1571,7 @@ User opens application
         ↓
 Selects Create Account
         ↓
-Enters name, email, and password
+Enters username, email, and password
         ↓
 Account is created
         ↓
@@ -1762,9 +1759,9 @@ The interface should clearly communicate when data is loading or a mutation is b
 
 Suitable approaches include:
 
-* Skeleton loading states.
-* Inline loading indicators.
-* Disabled submit buttons during mutations.
+- Skeleton loading states.
+- Inline loading indicators.
+- Disabled submit buttons during mutations.
 
 Checkbox interactions should feel immediate.
 
@@ -1812,8 +1809,8 @@ Deleting a tracker is a destructive action.
 
 Deleting a tracker should also delete:
 
-* All completed days belonging to the tracker.
-* All landmarks belonging to the tracker.
+- All completed days belonging to the tracker.
+- All landmarks belonging to the tracker.
 
 The user should receive a confirmation dialog before deletion.
 
@@ -1861,8 +1858,8 @@ Completion mode cannot be changed after creation in the MVP. Changing Practice t
 
 Trackers may initially be sorted by either:
 
-* Most recently created.
-* Most recently updated.
+- Most recently created.
+- Most recently updated.
 
 The final choice should remain consistent across the dashboard.
 
@@ -1927,10 +1924,10 @@ Mark August 16, 2026 as completed
 
 The application should support:
 
-* Keyboard navigation.
-* Visible focus states.
-* Screen readers.
-* Sufficient color contrast.
+- Keyboard navigation.
+- Visible focus states.
+- Screen readers.
+- Sufficient color contrast.
 
 Interactive controls should not rely solely on visual styling to communicate state.
 
@@ -1940,9 +1937,9 @@ Interactive controls should not rely solely on visual styling to communicate sta
 
 The interface should adapt appropriately to:
 
-* Mobile devices.
-* Tablets.
-* Desktop screens.
+- Mobile devices.
+- Tablets.
+- Desktop screens.
 
 Important daily actions should remain easily accessible on smaller screens: marking today on a Practice TheDays, and marking the latest finished day on an Abstinence TheDays.
 
@@ -2037,17 +2034,17 @@ The backend must independently verify authentication on every protected API endp
 
 The backend should:
 
-* Hash all passwords.
-* Never expose password hashes.
-* Validate all user input.
-* Verify ownership of resources.
-* Use secure HTTP-only authentication cookies.
-* Use secure cookies in production.
-* Configure suitable SameSite settings.
-* Use Helmet for HTTP security headers.
-* Rate-limit sensitive authentication endpoints.
-* Prevent duplicate completion records with database constraints.
-* Avoid exposing internal database errors directly to clients.
+- Hash all passwords.
+- Never expose password hashes.
+- Validate all user input.
+- Verify ownership of resources.
+- Use secure HTTP-only authentication cookies.
+- Use secure cookies in production.
+- Configure suitable SameSite settings.
+- Use Helmet for HTTP security headers.
+- Rate-limit sensitive authentication endpoints.
+- Prevent duplicate completion records with database constraints.
+- Avoid exposing internal database errors directly to clients.
 
 ---
 
@@ -2139,16 +2136,16 @@ PostgreSQL
 
 The backend should be responsible for:
 
-* Authentication and session handling.
-* Request validation.
-* Authorization and resource ownership checks.
-* Business rules.
-* Database access.
-* Tracker management.
-* Completed-day management.
-* Landmark management.
-* Date and timezone validation.
-* Returning structured API responses to the frontend.
+- Authentication and session handling.
+- Request validation.
+- Authorization and resource ownership checks.
+- Business rules.
+- Database access.
+- Tracker management.
+- Completed-day management.
+- Landmark management.
+- Date and timezone validation.
+- Returning structured API responses to the frontend.
 
 ## Frontend and Backend Contract
 
@@ -2224,9 +2221,9 @@ TanStack Router
 
 Build:
 
-* Registration page.
-* Login page.
-* Dashboard shell.
+- Registration page.
+- Login page.
+- Dashboard shell.
 
 ---
 
@@ -2343,14 +2340,14 @@ Display Reached Landmarks
 
 Complete:
 
-* Loading states.
-* Error handling.
-* Responsive layout.
-* Optimistic updates.
-* Confirmation dialogs.
-* Accessibility.
-* Long-history loading.
-* Account settings.
+- Loading states.
+- Error handling.
+- Responsive layout.
+- Optimistic updates.
+- Confirmation dialogs.
+- Accessibility.
+- Long-history loading.
+- Account settings.
 
 ---
 
@@ -2358,51 +2355,51 @@ Complete:
 
 ## Authentication
 
-* [ ] A new user can create an account.
-* [ ] A registered user can log in.
-* [ ] A logged-in user can log out.
-* [ ] Authentication persists across page refreshes.
-* [ ] One user cannot access another user's data.
+- [ ] A new user can create an account.
+- [ ] A registered user can log in.
+- [ ] A logged-in user can log out.
+- [ ] Authentication persists across page refreshes.
+- [ ] One user cannot access another user's data.
 
 ## TheDayss
 
-* [ ] A user can create a TheDays.
-* [ ] A TheDays has a title.
-* [ ] A TheDays may have a description.
-* [ ] A TheDays has a start date.
-* [ ] A TheDays has a completion mode of Practice or Abstinence, chosen at creation.
-* [ ] Completion mode cannot be changed after creation.
-* [ ] A user can view all TheDayss they own.
-* [ ] A user can edit a TheDays.
-* [ ] A user can delete a TheDays.
+- [ ] A user can create a TheDays.
+- [ ] A TheDays has a title.
+- [ ] A TheDays may have a description.
+- [ ] A TheDays has a start date.
+- [ ] A TheDays has a completion mode of Practice or Abstinence, chosen at creation.
+- [ ] Completion mode cannot be changed after creation.
+- [ ] A user can view all TheDayss they own.
+- [ ] A user can edit a TheDays.
+- [ ] A user can delete a TheDays.
 
 ## Completed Days
 
-* [ ] All valid dates between the start date and today can be displayed.
-* [ ] Future dates are not displayed.
-* [ ] On a Practice TheDays, a user can mark today as completed.
-* [ ] On an Abstinence TheDays, today is displayed and cannot be marked completed.
-* [ ] On an Abstinence TheDays, a user can mark yesterday as completed after that day has ended.
-* [ ] The backend rejects completing today on an Abstinence TheDays.
-* [ ] A user can unmark a completed day.
-* [ ] Completed days remain completed after page refresh.
-* [ ] Each completed day contributes exactly one to the TheDays.
-* [ ] Incomplete days do not contribute to the TheDays.
-* [ ] Missing a day does not reset the TheDays.
-* [ ] Completing a later day increases the cumulative TheDays.
-* [ ] The same date cannot be counted twice.
+- [ ] All valid dates between the start date and today can be displayed.
+- [ ] Future dates are not displayed.
+- [ ] On a Practice TheDays, a user can mark today as completed.
+- [ ] On an Abstinence TheDays, today is displayed and cannot be marked completed.
+- [ ] On an Abstinence TheDays, a user can mark yesterday as completed after that day has ended.
+- [ ] The backend rejects completing today on an Abstinence TheDays.
+- [ ] A user can unmark a completed day.
+- [ ] Completed days remain completed after page refresh.
+- [ ] Each completed day contributes exactly one to the TheDays.
+- [ ] Incomplete days do not contribute to the TheDays.
+- [ ] Missing a day does not reset the TheDays.
+- [ ] Completing a later day increases the cumulative TheDays.
+- [ ] The same date cannot be counted twice.
 
 ## Landmarks
 
-* [ ] A user can create a landmark.
-* [ ] A landmark may contain a title.
-* [ ] A landmark has a target TheDays.
-* [ ] A landmark has a celebration description.
-* [ ] A user can edit a landmark.
-* [ ] A user can delete a landmark.
-* [ ] The next upcoming landmark is visible.
-* [ ] Progress toward a landmark is visible.
-* [ ] Reached landmarks remain visible.
+- [ ] A user can create a landmark.
+- [ ] A landmark may contain a title.
+- [ ] A landmark has a target TheDays.
+- [ ] A landmark has a celebration description.
+- [ ] A user can edit a landmark.
+- [ ] A user can delete a landmark.
+- [ ] The next upcoming landmark is visible.
+- [ ] Progress toward a landmark is visible.
+- [ ] Reached landmarks remain visible.
 
 ---
 

@@ -15,37 +15,37 @@ In the UI, the product is a **TheDays**. Internally, that entity is a **Tracker*
 
 1. **Clarity over cleverness**
 
-   * Write code that is easy to read, reason about, and maintain.
-   * Avoid unnecessary abstractions or “smart” tricks.
+   - Write code that is easy to read, reason about, and maintain.
+   - Avoid unnecessary abstractions or “smart” tricks.
 
 2. **DRY, but not blindly DRY**
 
-   * Eliminate duplication only when it improves maintainability.
-   * Do not over-abstract prematurely.
+   - Eliminate duplication only when it improves maintainability.
+   - Do not over-abstract prematurely.
 
 3. **Single Responsibility Principle**
 
-   * Each function/module/component should have one clear purpose.
-   * If something is doing too much, split it.
+   - Each function/module/component should have one clear purpose.
+   - If something is doing too much, split it.
 
 4. **Consistency with the existing codebase**
 
-   * Follow the existing patterns, naming conventions, and architecture.
-   * If the existing pattern is bad, improve it gradually—not disruptively.
+   - Follow the existing patterns, naming conventions, and architecture.
+   - If the existing pattern is bad, improve it gradually—not disruptively.
 
 5. **Minimal surface area of change**
 
-   * Do not rewrite large parts of the system unless absolutely necessary.
-   * Prefer surgical, precise changes.
+   - Do not rewrite large parts of the system unless absolutely necessary.
+   - Prefer surgical, precise changes.
 
 6. **Explicitness**
 
-   * Avoid hidden side effects.
-   * Make data flow and logic obvious.
+   - Avoid hidden side effects.
+   - Make data flow and logic obvious.
 
 7. **Scalability mindset**
 
-   * Write code that will still make sense with 10x more features or data.
+   - Write code that will still make sense with 10x more features or data.
 
 ---
 
@@ -67,11 +67,11 @@ Before touching code for a **non-trivial** feature, behavior change, or architec
 
 ### Before Writing Code
 
-* If you paused after **Evaluate requests before implementing**, continue only once the user has chosen a direction (your suggestion versus theirs).
-* Restate the problem in your own words.
-* Identify constraints and edge cases.
-* Identify potential side effects of the change.
-* Ask for clarification if anything is ambiguous.
+- If you paused after **Evaluate requests before implementing**, continue only once the user has chosen a direction (your suggestion versus theirs).
+- Restate the problem in your own words.
+- Identify constraints and edge cases.
+- Identify potential side effects of the change.
+- Ask for clarification if anything is ambiguous.
 
 ---
 
@@ -105,13 +105,13 @@ Do **not** import TypeScript files from `thedays-backend`. Call `VITE_API_URL` w
 
 ### Domain invariants
 
-* **Auth:** Cookie session via the API. Frontend route guards are UX only; the backend is authoritative.
-* **Day list:** Generate calendar days client-side from `tracker.startDate` through the user’s current calendar date. Incomplete days are missing completion strings, not API rows. Do not render future dates. Paginate or batch long histories (30/60/90); do not mount thousands of day rows at once.
-* **TheDays count:** Display the count of completed days returned by the API, never `today - startDate`.
-* **Optimistic UI:** Complete/uncomplete may update immediately, then rollback and show an error if the request fails.
-* **Dates:** Send and receive `YYYY-MM-DD`. Use the user’s timezone (profile, falling back to `Intl`) to decide “today”—not UTC-only `Date` math.
-* **Accessibility:** Day controls need semantic labels such as `Mark August 16, 2026 as completed`, keyboard access, and visible focus.
-* **Completion mode:** Required at create; not editable later. Practice: today is the primary CTA and is completable. Abstinence: today is visible and disabled (“available after the day ends”); the primary CTA is yesterday / the latest finished day. Create requires an explicit Practice or Abstinence choice.
+- **Auth:** Cookie session via the API. Frontend route guards are UX only; the backend is authoritative.
+- **Day list:** Generate calendar days client-side from `tracker.startDate` through the user’s current calendar date. Incomplete days are missing completion strings, not API rows. Do not render future dates. Paginate or batch long histories (30/60/90); do not mount thousands of day rows at once.
+- **TheDays count:** Display the count of completed days returned by the API, never `today - startDate`.
+- **Optimistic UI:** Complete/uncomplete may update immediately, then rollback and show an error if the request fails.
+- **Dates:** Send and receive `YYYY-MM-DD`. Use the user’s timezone (profile, falling back to `Intl`) to decide “today”—not UTC-only `Date` math.
+- **Accessibility:** Day controls need semantic labels such as `Mark August 16, 2026 as completed`, keyboard access, and visible focus.
+- **Completion mode:** Required at create; not editable later. Practice: today is the primary CTA and is completable. Abstinence: today is visible and disabled (“available after the day ends”); the primary CTA is yesterday / the latest finished day. Create requires an explicit Practice or Abstinence choice.
 
 Do not apply one global “today” or “day must be over” rule.
 
@@ -119,25 +119,26 @@ Do not apply one global “today” or “day must be over” rule.
 
 ### When Writing Code
 
-* Use meaningful variable and function names.
-* Prefer small, composable functions and components.
-* Avoid deep nesting.
-* Handle edge cases explicitly.
-* Keep logic predictable and testable.
-* Match TypeScript and import style of nearby files. Do not invent Homie-era lint dialects (`Array<T>` mandates, Homie dashboard `services.ts` paths) unless this repo’s ESLint actually requires them.
-* Put API calls in the feature/`api` layer, not ad hoc `fetch` inside presentational components once that layer exists.
+- Use meaningful variable and function names.
+- Prefer small, composable functions and components.
+- Avoid deep nesting.
+- Handle edge cases explicitly.
+- Keep logic predictable and testable.
+- Match TypeScript and import style of nearby files. Do not invent Homie-era lint dialects (`Array<T>` mandates, Homie dashboard `services.ts` paths) unless this repo’s ESLint actually requires them.
+- Put API calls in the feature/`api` layer, not ad hoc `fetch` inside presentational components once that layer exists.
 
 ---
 
 ### After Writing Code
 
-* Review your solution critically:
+- Review your solution critically:
 
-  * Is this the simplest possible solution?
-  * Is anything unnecessarily complex?
-  * Is anything duplicated?
-  * Is naming clear and intention-revealing?
-* Suggest improvements if you notice weak areas in the surrounding code.
+  - Is this the simplest possible solution?
+  - Is anything unnecessarily complex?
+  - Is anything duplicated?
+  - Is naming clear and intention-revealing?
+
+- Suggest improvements if you notice weak areas in the surrounding code.
 
 ---
 
@@ -145,28 +146,28 @@ Do not apply one global “today” or “day must be over” rule.
 
 1. **Explanation**
 
-   * Briefly explain what you changed and why.
-   * Highlight trade-offs if any.
+   - Briefly explain what you changed and why.
+   - Highlight trade-offs if any.
 
 2. **Code**
 
-   * Provide clean, well-formatted code.
-   * Do not include irrelevant changes.
+   - Provide clean, well-formatted code.
+   - Do not include irrelevant changes.
 
 3. **Optional Improvements**
 
-   * Suggest (but do not enforce) further refactors if beneficial.
+   - Suggest (but do not enforce) further refactors if beneficial.
 
 ---
 
 ### Strict Rules
 
-* Do NOT rubber-stamp or blindly implement features or architecture changes—follow **Evaluate requests before implementing**, except when the request is clearly sound or trivial/routine as described there.
-* Do NOT rush to code without thinking.
-* Do NOT introduce unnecessary dependencies.
-* Do NOT over-engineer.
-* Do NOT ignore existing architecture unless it is clearly harmful.
-* Do NOT silently make assumptions—state them.
+- Do NOT rubber-stamp or blindly implement features or architecture changes—follow **Evaluate requests before implementing**, except when the request is clearly sound or trivial/routine as described there.
+- Do NOT rush to code without thinking.
+- Do NOT introduce unnecessary dependencies.
+- Do NOT over-engineer.
+- Do NOT ignore existing architecture unless it is clearly harmful.
+- Do NOT silently make assumptions—state them.
 
 ---
 
