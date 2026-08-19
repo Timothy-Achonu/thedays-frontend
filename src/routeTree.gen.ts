@@ -14,6 +14,7 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as VerifyEmailRouteImport } from './routes/verify-email'
 import { Route as TrackersNewRouteImport } from './routes/trackers/new'
 import { Route as TrackersTrackerIdIndexRouteImport } from './routes/trackers/$trackerId/index'
 import { Route as TrackersTrackerIdEditRouteImport } from './routes/trackers/$trackerId/edit'
@@ -43,6 +44,11 @@ const SettingsRoute = SettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
+const VerifyEmailRoute = VerifyEmailRouteImport.update({
+  id: '/verify-email',
+  path: '/verify-email',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TrackersNewRoute = TrackersNewRouteImport.update({
   id: '/trackers/new',
   path: '/trackers/new',
@@ -65,6 +71,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/settings': typeof SettingsRoute
+  '/verify-email': typeof VerifyEmailRoute
   '/trackers/new': typeof TrackersNewRoute
   '/trackers/$trackerId/edit': typeof TrackersTrackerIdEditRoute
   '/trackers/$trackerId/': typeof TrackersTrackerIdIndexRoute
@@ -75,6 +82,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/settings': typeof SettingsRoute
+  '/verify-email': typeof VerifyEmailRoute
   '/trackers/new': typeof TrackersNewRoute
   '/trackers/$trackerId/edit': typeof TrackersTrackerIdEditRoute
   '/trackers/$trackerId': typeof TrackersTrackerIdIndexRoute
@@ -86,6 +94,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/settings': typeof SettingsRoute
+  '/verify-email': typeof VerifyEmailRoute
   '/trackers/new': typeof TrackersNewRoute
   '/trackers/$trackerId/edit': typeof TrackersTrackerIdEditRoute
   '/trackers/$trackerId/': typeof TrackersTrackerIdIndexRoute
@@ -98,6 +107,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/settings'
+    | '/verify-email'
     | '/trackers/new'
     | '/trackers/$trackerId/edit'
     | '/trackers/$trackerId/'
@@ -108,6 +118,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/settings'
+    | '/verify-email'
     | '/trackers/new'
     | '/trackers/$trackerId/edit'
     | '/trackers/$trackerId'
@@ -118,6 +129,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/settings'
+    | '/verify-email'
     | '/trackers/new'
     | '/trackers/$trackerId/edit'
     | '/trackers/$trackerId/'
@@ -129,6 +141,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
   SettingsRoute: typeof SettingsRoute
+  VerifyEmailRoute: typeof VerifyEmailRoute
   TrackersNewRoute: typeof TrackersNewRoute
   TrackersTrackerIdEditRoute: typeof TrackersTrackerIdEditRoute
   TrackersTrackerIdIndexRoute: typeof TrackersTrackerIdIndexRoute
@@ -171,6 +184,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/verify-email': {
+      id: '/verify-email'
+      path: '/verify-email'
+      fullPath: '/verify-email'
+      preLoaderRoute: typeof VerifyEmailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/trackers/new': {
       id: '/trackers/new'
       path: '/trackers/new'
@@ -201,6 +221,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
   SettingsRoute: SettingsRoute,
+  VerifyEmailRoute: VerifyEmailRoute,
   TrackersNewRoute: TrackersNewRoute,
   TrackersTrackerIdEditRoute: TrackersTrackerIdEditRoute,
   TrackersTrackerIdIndexRoute: TrackersTrackerIdIndexRoute,

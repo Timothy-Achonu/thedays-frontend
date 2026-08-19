@@ -1,13 +1,16 @@
-import { useState, useMemo, type FormEvent } from 'react'
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { useMemo, useState } from 'react'
+import { Link, createFileRoute } from '@tanstack/react-router'
+import type { FormEvent } from 'react'
 import { AuthLayout } from '@/layouts'
-import { Button, GoogleIcon, Input, PasswordInput, Card } from '@/components/ui'
+import { Button, Card, GoogleIcon, Input, PasswordInput } from '@/components/ui'
 import { ROUTES } from '@/lib/constants/routes'
 import { useRegisterMutation } from '@/lib/app/auth'
-import { parseApiError, getFieldError, getAuthErrorMessage } from '@/lib/utils'
+import { requireGuest } from '@/lib/auth/guards'
+import { getAuthErrorMessage, getFieldError, parseApiError } from '@/lib/utils'
 import { cn } from '@/lib/utils/cn'
 
 export const Route = createFileRoute('/register')({
+  beforeLoad: ({ context }) => requireGuest(context.queryClient),
   component: RegisterPage,
 })
 
@@ -29,7 +32,7 @@ function RegisterPage() {
     }
   }, [])
 
-  const handleSubmit = async (e: FormEvent) => {
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
     setFormError(null)
     setFieldErrors({})
@@ -72,6 +75,10 @@ function RegisterPage() {
       {
         onError: (error) => {
           const parsed = parseApiError(error)
+
+          if (parsed.code === 'EMAIL_DELIVERY_FAILED') {
+            return
+          }
 
           if (parsed.code === 'VALIDATION_ERROR') {
             setFieldErrors({

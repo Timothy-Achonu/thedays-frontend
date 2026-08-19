@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
+import {Link, createFileRoute, } from '@tanstack/react-router'
 import { Button, Logo } from '@/components/ui'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'

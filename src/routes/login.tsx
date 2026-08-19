@@ -1,13 +1,16 @@
-import { useState, type FormEvent } from 'react'
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { useState } from 'react'
+import { Link, createFileRoute, useNavigate } from '@tanstack/react-router'
+import type { FormEvent } from 'react'
 import { AuthLayout } from '@/layouts'
-import { Button, GoogleIcon, Input, PasswordInput, Card } from '@/components/ui'
+import { Button, Card, GoogleIcon, Input, PasswordInput } from '@/components/ui'
 import { ROUTES } from '@/lib/constants/routes'
 import { useLoginMutation } from '@/lib/app/auth'
-import { parseApiError, getFieldError, getAuthErrorMessage } from '@/lib/utils'
+import { requireGuest } from '@/lib/auth/guards'
+import { getAuthErrorMessage, getFieldError, parseApiError } from '@/lib/utils'
 import { cn } from '@/lib/utils/cn'
 
 export const Route = createFileRoute('/login')({
+  beforeLoad: ({ context }) => requireGuest(context.queryClient),
   component: LoginPage,
 })
 
@@ -19,8 +22,9 @@ function LoginPage() {
   const [shakeForm, setShakeForm] = useState(false)
 
   const loginMutation = useLoginMutation()
+  const navigate = useNavigate()
 
-  const handleSubmit = async (e: FormEvent) => {
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
     setFormError(null)
     setFieldErrors({})
@@ -40,6 +44,14 @@ function LoginPage() {
       {
         onError: (error) => {
           const parsed = parseApiError(error)
+
+          if (parsed.code === 'EMAIL_NOT_VERIFIED') {
+            void navigate({
+              to: '/verify-email',
+              search: { email: email.trim().toLowerCase() },
+            })
+            return
+          }
 
           if (parsed.code === 'VALIDATION_ERROR') {
             setFieldErrors({
@@ -69,7 +81,10 @@ function LoginPage() {
   const isLoading = loginMutation.isPending
 
   return (
-    <AuthLayout title="Welcome back" subtitle="Sign in to continue your progress">
+    <AuthLayout
+      title="Welcome back"
+      subtitle="Sign in to continue your progress"
+    >
       <Card
         variant="elevated"
         padding="lg"

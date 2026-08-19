@@ -1,7 +1,12 @@
+import type { AuthResponse } from '@/types/auth'
 import type { User } from '@/lib/common/models'
-import { getBaseUrl, network } from '@/lib/common'
+import { axiosClient } from '@/lib/common/axios-client'
+import { getBaseUrl } from '@/lib/common/getBaseUrl'
 
-export const getCurrentUser = async () => {
-  const URL = `${getBaseUrl()}/auth/me`
-  return network.get<User>(URL)
+export async function getCurrentUser(): Promise<User> {
+  const response = await axiosClient.get<AuthResponse>(
+    `${getBaseUrl()}/auth/me`,
+    { fetcherOptions: { skipAuthRedirect: true } },
+  )
+  return response.data.user
 }

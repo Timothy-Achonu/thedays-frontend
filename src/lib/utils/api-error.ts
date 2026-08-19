@@ -4,8 +4,8 @@ import type { ApiError, AuthErrorCode } from '@/types/auth'
 export interface ParsedApiError {
   code: string
   message: string
-  fieldErrors: Record<string, string[]>
-  formErrors: string[]
+  fieldErrors: Record<string, Array<string>>
+  formErrors: Array<string>
 }
 
 export function parseApiError(error: unknown): ParsedApiError {
@@ -47,16 +47,19 @@ export function getFieldError(
   error: ParsedApiError,
   field: string,
 ): string | undefined {
-  const errors = error.fieldErrors[field]
-  return errors?.[0]
+  const errors = error.fieldErrors[field] ?? []
+  return errors[0]
 }
 
 export function hasFieldError(error: ParsedApiError, field: string): boolean {
-  return Boolean(error.fieldErrors[field]?.length)
+  return (error.fieldErrors[field] ?? []).length > 0
 }
 
 export function getFormError(error: ParsedApiError): string | undefined {
-  return error.formErrors[0] || (Object.keys(error.fieldErrors).length === 0 ? error.message : undefined)
+  return (
+    error.formErrors[0] ||
+    (Object.keys(error.fieldErrors).length === 0 ? error.message : undefined)
+  )
 }
 
 export function getAuthErrorMessage(code: AuthErrorCode | string): string {
@@ -67,6 +70,12 @@ export function getAuthErrorMessage(code: AuthErrorCode | string): string {
       return 'This username is already taken. Please choose another.'
     case 'EMAIL_ALREADY_REGISTERED':
       return 'An account with this email already exists. Try signing in instead.'
+    case 'EMAIL_NOT_VERIFIED':
+      return 'Verify your email before signing in.'
+    case 'EMAIL_DELIVERY_FAILED':
+      return 'We could not send the verification email. Please try resending the code.'
+    case 'INVALID_OR_EXPIRED_CODE':
+      return 'Invalid or expired verification code. Please try again.'
     case 'REGISTRATION_CONFLICT':
       return 'An account with these details already exists.'
     case 'RATE_LIMIT_EXCEEDED':
@@ -81,7 +90,10 @@ export function getAuthErrorMessage(code: AuthErrorCode | string): string {
 }
 
 export function isRateLimitError(error: unknown): boolean {
-  if (!isAxiosError(error)) return false
-  const code = (error.response?.data as ApiError | undefined)?.error?.code
+  if (!isAxiosError(error) || !error.response) {
+    return false
+  }
+
+  const code = (error.response.data as ApiError | undefined)?.error.code
   return code === 'RATE_LIMIT_EXCEEDED'
 }
