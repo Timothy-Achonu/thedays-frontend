@@ -33,6 +33,7 @@ export function useLoginMutation() {
       const response = await axiosClient.post<AuthResponse>(
         `${getBaseUrl()}/auth/login`,
         data,
+        { fetcherOptions: { skipAuthRedirect: true } },
       )
       return response.data.user
     },
@@ -54,6 +55,7 @@ export function useRegisterMutation() {
       const response = await axiosClient.post<RegisterResponse>(
         `${getBaseUrl()}/auth/register`,
         { ...data, timezone },
+        { fetcherOptions: { skipAuthRedirect: true } },
       )
       return response.data
     },
@@ -77,6 +79,7 @@ export function useVerifyEmailMutation() {
       const response = await axiosClient.post<AuthResponse>(
         `${getBaseUrl()}/auth/verify-email`,
         data,
+        { fetcherOptions: { skipAuthRedirect: true } },
       )
       return response.data.user
     },
@@ -90,7 +93,9 @@ export function useVerifyEmailMutation() {
 export function useResendVerificationMutation() {
   return useMutation({
     mutationFn: async (data: ResendVerificationInput): Promise<void> => {
-      await axiosClient.post(`${getBaseUrl()}/auth/resend-verification`, data)
+      await axiosClient.post(`${getBaseUrl()}/auth/resend-verification`, data, {
+        fetcherOptions: { skipAuthRedirect: true },
+      })
     },
   })
 }
@@ -106,11 +111,6 @@ export function useLogoutMutation() {
       })
     },
     onSuccess: () => {
-      queryClient.removeQueries({ queryKey: AUTH_USER_QUERY_KEY })
-      queryClient.clear()
-      navigate({ to: ROUTES.login })
-    },
-    onError: () => {
       queryClient.removeQueries({ queryKey: AUTH_USER_QUERY_KEY })
       queryClient.clear()
       navigate({ to: ROUTES.login })

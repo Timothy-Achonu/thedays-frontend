@@ -1,8 +1,12 @@
 import { Link, createFileRoute } from '@tanstack/react-router'
-import { useCurrentUserQuery } from '@/lib/app/auth'
+import {
+  useCurrentUserQuery,
+  useLogoutMutation,
+} from '@/lib/app/auth'
 import { requireAuth } from '@/lib/auth/guards'
 import { ROUTES } from '@/lib/constants/routes'
 import { RouteStub } from '@/components/route-stub'
+import { Button } from '@/components/ui'
 
 export const Route = createFileRoute('/dashboard')({
   beforeLoad: ({ context }) => requireAuth(context.queryClient),
@@ -11,6 +15,7 @@ export const Route = createFileRoute('/dashboard')({
 
 function DashboardPage() {
   const { data: user } = useCurrentUserQuery()
+  const logoutMutation = useLogoutMutation()
 
   return (
     <RouteStub
@@ -20,7 +25,25 @@ function DashboardPage() {
         { to: ROUTES.trackers.new, label: 'Create TheDays' },
         { to: ROUTES.settings, label: 'Settings' },
       ]}
-    />
+    >
+      <div className="flex flex-col items-start gap-2">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          isLoading={logoutMutation.isPending}
+          disabled={logoutMutation.isPending}
+          onClick={() => logoutMutation.mutate()}
+        >
+          Log out
+        </Button>
+        {logoutMutation.isError ? (
+          <p className="text-sm text-neutral-600">
+            Couldn't log out. Try again.
+          </p>
+        ) : null}
+      </div>
+    </RouteStub>
   )
 }
 

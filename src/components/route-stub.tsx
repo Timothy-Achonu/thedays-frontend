@@ -1,12 +1,19 @@
 import { Link } from '@tanstack/react-router'
+import type { ReactNode } from 'react'
 
 type RouteStubProps = {
   title: string
   description: string
   links?: Array<{ to: string; label: string }>
+  children?: ReactNode
 }
 
-export function RouteStub({ title, description, links = [] }: RouteStubProps) {
+export function RouteStub({
+  title,
+  description,
+  links = [],
+  children,
+}: RouteStubProps) {
   return (
     <main className="mx-auto flex min-h-dvh max-w-lg flex-col justify-center gap-4 p-6">
       <p className="text-sm font-medium uppercase tracking-wide text-neutral-500">
@@ -30,6 +37,7 @@ export function RouteStub({ title, description, links = [] }: RouteStubProps) {
           ))}
         </nav>
       ) : null}
+      {children}
     </main>
   )
 }
