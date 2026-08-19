@@ -27,3 +27,6 @@ dist-ssr
 .env
 .env.development.local
 .env.local
+
+# Local scratch (not product docs)
+project-documents/

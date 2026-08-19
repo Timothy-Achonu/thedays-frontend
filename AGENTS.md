@@ -2,7 +2,7 @@
 
 All automated agents (and humans using agent-assisted workflows) should treat this file as the default playbook for how to work in this repository.
 
-This is the **TheDays frontend**: a React / Vite / TypeScript SPA with TanStack Router and TanStack Query. Product requirements live in [project-documents/TheDays-PRD-separate-repos.md](project-documents/TheDays-PRD-separate-repos.md). Treat that document as the product contract. The API lives in a separate repo (`thedays-backend`); if the two PRD copies disagree, ask before proceeding.
+This is the **TheDays frontend**: a React / Vite / TypeScript SPA with TanStack Router and TanStack Query. Product requirements live in [PRD.md](PRD.md). Treat that document as the product contract. The API lives in a separate repo (`thedays-backend`); if the two PRD copies disagree, ask before proceeding. `project-documents/` is local scratch only and is gitignored.
 
 ## Use project skills
 
