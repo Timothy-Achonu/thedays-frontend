@@ -5,6 +5,10 @@ export interface LoginInput {
   password: string
 }
 
+export interface GoogleAuthInput {
+  idToken: string
+}
+
 export interface RegisterInput {
   username: string
   email: string
@@ -46,6 +50,8 @@ export interface ApiError {
 export type AuthErrorCode =
   | 'VALIDATION_ERROR'
   | 'INVALID_CREDENTIALS'
+  | 'USE_GOOGLE_SIGN_IN'
+  | 'INVALID_GOOGLE_TOKEN'
   | 'USERNAME_TAKEN'
   | 'EMAIL_ALREADY_REGISTERED'
   | 'EMAIL_NOT_VERIFIED'

@@ -6,16 +6,23 @@ function normalizeBackendBase(raw: string | undefined): string {
   return raw.replace(/\/+$/, '')
 }
 
+/** Ensure the REST base includes `/api` without doubling it. */
+function withApiPrefix(origin: string): string {
+  if (!origin) return '/api'
+  if (origin === '/api' || origin.endsWith('/api')) return origin
+  return `${origin}/api`
+}
+
 /** Raw backend base from env (no `/api` suffix). */
 export function getBackendBaseUrl(): string {
   return normalizeBackendBase(import.meta.env.VITE_API_URL)
 }
 
 /**
- * Base URL for REST calls.
+ * Base URL for REST calls. Always includes the `/api` prefix the backend mounts on.
  *
  * - **Development:** `${origin}/api` so Vite proxies `/api/*` → backend (see `vite.config.ts`).
- * - **Production:** raw `VITE_API_URL` (no automatic `/api` segment).
+ * - **Production:** `${VITE_API_URL}/api`. Does not append a second `/api` if the origin already ends with it.
  */
 export function getBaseUrl(): string {
   if (import.meta.env.DEV) {
@@ -24,5 +31,5 @@ export function getBaseUrl(): string {
     }
     return '/api'
   }
-  return getBackendBaseUrl()
+  return withApiPrefix(getBackendBaseUrl())
 }

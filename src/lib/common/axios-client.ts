@@ -15,6 +15,7 @@ declare module 'axios' {
 const UNAUTHENTICATED_AUTH_PATHS = [
   '/auth/login',
   '/auth/register',
+  '/auth/google',
   '/auth/verify-email',
   '/auth/resend-verification',
 ] as const

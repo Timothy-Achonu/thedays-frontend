@@ -3,6 +3,7 @@ import { useNavigate } from '@tanstack/react-router'
 import { AUTH_USER_QUERY_KEY } from './queries'
 import type {
   AuthResponse,
+  GoogleAuthInput,
   LoginInput,
   RegisterInput,
   RegisterResponse,
@@ -33,6 +34,27 @@ export function useLoginMutation() {
       const response = await axiosClient.post<AuthResponse>(
         `${getBaseUrl()}/auth/login`,
         data,
+        { fetcherOptions: { skipAuthRedirect: true } },
+      )
+      return response.data.user
+    },
+    onSuccess: (user) => {
+      queryClient.setQueryData(AUTH_USER_QUERY_KEY, user)
+      navigate({ to: ROUTES.dashboard })
+    },
+  })
+}
+
+export function useGoogleLoginMutation() {
+  const queryClient = useQueryClient()
+  const navigate = useNavigate()
+
+  return useMutation({
+    mutationFn: async (data: GoogleAuthInput): Promise<User> => {
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
+      const response = await axiosClient.post<AuthResponse>(
+        `${getBaseUrl()}/auth/google`,
+        { ...data, timezone },
         { fetcherOptions: { skipAuthRedirect: true } },
       )
       return response.data.user

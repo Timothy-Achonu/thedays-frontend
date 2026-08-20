@@ -66,6 +66,10 @@ export function getAuthErrorMessage(code: AuthErrorCode | string): string {
   switch (code) {
     case 'INVALID_CREDENTIALS':
       return 'Invalid email or password. Please try again.'
+    case 'USE_GOOGLE_SIGN_IN':
+      return 'This account uses Google sign-in. Continue with Google instead.'
+    case 'INVALID_GOOGLE_TOKEN':
+      return 'Google sign-in failed. Please try again.'
     case 'USERNAME_TAKEN':
       return 'This username is already taken. Please choose another.'
     case 'EMAIL_ALREADY_REGISTERED':

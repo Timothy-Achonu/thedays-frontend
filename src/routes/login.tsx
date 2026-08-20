@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router'
 import type { FormEvent } from 'react'
 import { AuthLayout } from '@/layouts'
-import { Button, Card, GoogleIcon, Input, PasswordInput } from '@/components/ui'
+import { Button, Card, Input, PasswordInput } from '@/components/ui'
+import { GoogleSignIn } from '@/components/auth/google-sign-in'
 import { ROUTES } from '@/lib/constants/routes'
 import { useLoginMutation } from '@/lib/app/auth'
 import { requireGuest } from '@/lib/auth/guards'
@@ -71,11 +72,6 @@ function LoginPage() {
   const triggerShake = () => {
     setShakeForm(true)
     setTimeout(() => setShakeForm(false), 500)
-  }
-
-  const handleGoogleSignIn = () => {
-    setFormError('Google sign-in coming soon!')
-    setTimeout(() => setFormError(null), 3000)
   }
 
   const isLoading = loginMutation.isPending
@@ -168,17 +164,13 @@ function LoginPage() {
 
         {/* Google Button */}
         <div className="animate-fade-in-up stagger-6">
-          <Button
-            type="button"
-            variant="google"
-            fullWidth
-            size="lg"
-            leftIcon={<GoogleIcon />}
-            onClick={handleGoogleSignIn}
+          <GoogleSignIn
             disabled={isLoading}
-          >
-            Continue with Google
-          </Button>
+            onError={(message) => {
+              setFormError(message)
+              triggerShake()
+            }}
+          />
         </div>
 
         {/* Register Link */}
