@@ -7,6 +7,42 @@ import { routeTree } from './routeTree.gen.ts'
 
 import './styles.css'
 
+const PRELOAD_RELOAD_STORAGE_KEY = 'thedays:last-preload-reload'
+const PRELOAD_RELOAD_WINDOW_MS = 60_000
+
+window.addEventListener('vite:preloadError', (event) => {
+  const failureKey = event.payload.message
+
+  try {
+    const storedReload = window.sessionStorage.getItem(
+      PRELOAD_RELOAD_STORAGE_KEY,
+    )
+    const previousReload = storedReload
+      ? (JSON.parse(storedReload) as {
+          failureKey?: string
+          timestamp?: number
+        })
+      : null
+    const recentlyReloadedForFailure =
+      previousReload?.failureKey === failureKey &&
+      typeof previousReload.timestamp === 'number' &&
+      Date.now() - previousReload.timestamp < PRELOAD_RELOAD_WINDOW_MS
+
+    if (recentlyReloadedForFailure) return
+
+    window.sessionStorage.setItem(
+      PRELOAD_RELOAD_STORAGE_KEY,
+      JSON.stringify({ failureKey, timestamp: Date.now() }),
+    )
+  } catch {
+    // Without session storage, let the route error render instead of risking a loop.
+    return
+  }
+
+  event.preventDefault()
+  window.location.reload()
+})
+
 const TanStackQueryProviderContext = TanStackQueryProvider.getContext()
 const router = createRouter({
   routeTree,
