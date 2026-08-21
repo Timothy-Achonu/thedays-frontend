@@ -1,6 +1,7 @@
 import axios, { isAxiosError } from 'axios'
 import type { AxiosRequestConfig } from 'axios'
 import { HttpStatus } from '@/lib/utils'
+import { markSessionSignedOut } from '@/lib/auth/session-state'
 
 export type FetcherOptions = {
   skipAuthRedirect?: boolean
@@ -50,9 +51,17 @@ axiosClient.interceptors.response.use(
       isAxiosError(error) &&
       error.response?.status === HttpStatus.UNAUTHORIZED
     ) {
+      const unauthenticatedAuthRequest = isUnauthenticatedAuthRequest(
+        error.config?.url,
+      )
+
+      if (!unauthenticatedAuthRequest) {
+        markSessionSignedOut()
+      }
+
       const skipRedirect =
         error.config?.fetcherOptions?.skipAuthRedirect ||
-        isUnauthenticatedAuthRequest(error.config?.url)
+        unauthenticatedAuthRequest
       if (!skipRedirect && typeof window !== 'undefined') {
         window.location.href = '/login?redirect_reason=unauthorized'
       }

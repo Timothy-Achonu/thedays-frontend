@@ -1,17 +1,24 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import type { FormEvent } from 'react'
 import { AuthLayout } from '@/layouts'
-import { Button, Card, Input, PasswordInput } from '@/components/ui'
+import {
+  Button,
+  Card,
+  Input,
+  PasswordInput,
+  TimezoneSelect,
+} from '@/components/ui'
 import { GoogleSignIn } from '@/components/auth/google-sign-in'
 import { ROUTES } from '@/lib/constants/routes'
 import { useRegisterMutation } from '@/lib/app/auth'
 import { requireGuest } from '@/lib/auth/guards'
 import { getAuthErrorMessage, getFieldError, parseApiError } from '@/lib/utils'
 import { cn } from '@/lib/utils/cn'
+import { getDefaultTimezone } from '@/lib/utils/timezone'
 
 export const Route = createFileRoute('/register')({
-  beforeLoad: ({ context }) => requireGuest(context.queryClient),
+  beforeLoad: requireGuest,
   component: RegisterPage,
 })
 
@@ -19,19 +26,12 @@ function RegisterPage() {
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [timezone, setTimezone] = useState(getDefaultTimezone)
   const [formError, setFormError] = useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [shakeForm, setShakeForm] = useState(false)
 
   const registerMutation = useRegisterMutation()
-
-  const detectedTimezone = useMemo(() => {
-    try {
-      return Intl.DateTimeFormat().resolvedOptions().timeZone
-    } catch {
-      return 'UTC'
-    }
-  }, [])
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
@@ -65,6 +65,10 @@ function RegisterPage() {
       errors.password = 'Password must be at least 8 characters'
     }
 
+    if (!timezone) {
+      errors.timezone = 'Timezone is required'
+    }
+
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors)
       triggerShake()
@@ -72,7 +76,7 @@ function RegisterPage() {
     }
 
     registerMutation.mutate(
-      { username: trimmedUsername, email: trimmedEmail, password },
+      { username: trimmedUsername, email: trimmedEmail, password, timezone },
       {
         onError: (error) => {
           const parsed = parseApiError(error)
@@ -86,6 +90,7 @@ function RegisterPage() {
               username: getFieldError(parsed, 'username') || '',
               email: getFieldError(parsed, 'email') || '',
               password: getFieldError(parsed, 'password') || '',
+              timezone: getFieldError(parsed, 'timezone') || '',
             })
           } else if (
             parsed.code === 'USERNAME_TAKEN' ||
@@ -184,15 +189,16 @@ function RegisterPage() {
             />
           </div>
 
-          {/* Timezone Display */}
+          {/* Timezone */}
           <div className="animate-fade-in-up stagger-4">
-            <div className="flex items-center gap-2 p-3 rounded-xl bg-sage-50 border border-sage-100">
-              <GlobeIcon className="w-4 h-4 text-sage-600 shrink-0" />
-              <span className="text-sm text-sage-700">
-                Your timezone:{' '}
-                <span className="font-medium">{detectedTimezone}</span>
-              </span>
-            </div>
+            <TimezoneSelect
+              value={timezone}
+              onChange={setTimezone}
+              error={fieldErrors.timezone}
+              disabled={isLoading}
+              required
+              hint="This decides which calendar day TheDays treats as today."
+            />
           </div>
 
           {/* Submit Button */}
@@ -237,6 +243,7 @@ function RegisterPage() {
         <div className="animate-fade-in-up stagger-6">
           <GoogleSignIn
             disabled={isLoading}
+            timezone={timezone}
             onError={(message) => {
               setFormError(message)
               triggerShake()
@@ -272,24 +279,6 @@ function AlertIcon({ className }: { className?: string }) {
         d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
         clipRule="evenodd"
       />
-    </svg>
-  )
-}
-
-function GlobeIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <circle cx="12" cy="12" r="10" />
-      <line x1="2" y1="12" x2="22" y2="12" />
-      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
     </svg>
   )
 }

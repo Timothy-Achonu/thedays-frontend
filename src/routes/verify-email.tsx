@@ -39,7 +39,7 @@ function validateSearch(search: Record<string, unknown>): VerifyEmailSearch {
 
 export const Route = createFileRoute('/verify-email')({
   validateSearch,
-  beforeLoad: ({ context }) => requireGuest(context.queryClient),
+  beforeLoad: requireGuest,
   component: VerifyEmailPage,
 })
 

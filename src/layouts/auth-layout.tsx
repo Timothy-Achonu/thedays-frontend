@@ -1,7 +1,16 @@
-import { type ReactNode } from 'react'
-import { Link } from '@tanstack/react-router'
+import { useEffect, useState } from 'react'
+import { Link, useNavigate } from '@tanstack/react-router'
+import type { ReactNode } from 'react'
 import { Logo } from '@/components/ui'
 import { cn } from '@/lib/utils/cn'
+import { useCurrentUserQuery } from '@/lib/app/auth/queries'
+import { isUnauthorizedError } from '@/lib/auth/guards'
+import {
+  getSessionState,
+  markSessionAuthenticated,
+  markSessionSignedOut,
+} from '@/lib/auth/session-state'
+import { ROUTES } from '@/lib/constants/routes'
 
 interface AuthLayoutProps {
   children: ReactNode
@@ -10,6 +19,32 @@ interface AuthLayoutProps {
 }
 
 export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
+  const [initialSessionState] = useState(getSessionState)
+  const navigate = useNavigate()
+  const currentUserQuery = useCurrentUserQuery(
+    initialSessionState === 'unknown',
+  )
+
+  useEffect(() => {
+    if (currentUserQuery.isSuccess) {
+      markSessionAuthenticated()
+      void navigate({ to: ROUTES.dashboard, replace: true })
+      return
+    }
+
+    if (
+      currentUserQuery.isError &&
+      isUnauthorizedError(currentUserQuery.error)
+    ) {
+      markSessionSignedOut()
+    }
+  }, [
+    currentUserQuery.error,
+    currentUserQuery.isError,
+    currentUserQuery.isSuccess,
+    navigate,
+  ])
+
   return (
     <div className="min-h-dvh lg:grid lg:h-dvh lg:grid-cols-2 lg:grid-rows-1">
       {/* Left Panel - Decorative */}
@@ -46,9 +81,7 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
 
         {/* Footer */}
         <footer className="py-4 px-4 text-center">
-          <p className="text-sm text-earth-500">
-            Every day counts. No resets.
-          </p>
+          <p className="text-sm text-earth-500">Every day counts. No resets.</p>
         </footer>
       </main>
     </div>
@@ -118,7 +151,10 @@ function DecorativePanel() {
         {/* Logo */}
         <div className="animate-fade-in-down">
           <Link to="/" className="inline-block focus-ring rounded-lg">
-            <Logo size="lg" className="[&_span]:text-white [&_svg_circle:first-child]:fill-white/20" />
+            <Logo
+              size="lg"
+              className="[&_span]:text-white [&_svg_circle:first-child]:fill-white/20"
+            />
           </Link>
         </div>
 

@@ -7,6 +7,7 @@ import { requireAuth } from '@/lib/auth/guards'
 import { ROUTES } from '@/lib/constants/routes'
 import { RouteStub } from '@/components/route-stub'
 import { Button } from '@/components/ui'
+import { TimezoneMismatchBanner } from '@/components/timezone-mismatch-banner'
 
 export const Route = createFileRoute('/dashboard')({
   beforeLoad: ({ context }) => requireAuth(context.queryClient),
@@ -27,6 +28,7 @@ function DashboardPage() {
       ]}
     >
       <div className="flex flex-col items-start gap-2">
+        {user ? <TimezoneMismatchBanner user={user} /> : null}
         <Button
           type="button"
           variant="ghost"

@@ -8,6 +8,7 @@ import type {
   RegisterInput,
   RegisterResponse,
   ResendVerificationInput,
+  UpdateCurrentUserInput,
   VerifyEmailInput,
 } from '@/types/auth'
 import type { User } from '@/lib/common/models'
@@ -15,6 +16,15 @@ import { axiosClient } from '@/lib/common/axios-client'
 import { getBaseUrl } from '@/lib/common/getBaseUrl'
 import { parseApiError } from '@/lib/utils'
 import { ROUTES } from '@/lib/constants/routes'
+import { isUnauthorizedError } from '@/lib/auth/guards'
+import {
+  markSessionAuthenticated,
+  markSessionSignedOut,
+} from '@/lib/auth/session-state'
+import {
+  dismissTimezoneMismatch,
+  getDefaultTimezone,
+} from '@/lib/utils/timezone'
 
 function verifyEmailPath(email: string, deliveryFailed = false) {
   return {
@@ -30,6 +40,8 @@ export function useLoginMutation() {
   const navigate = useNavigate()
 
   return useMutation({
+    onMutate: () =>
+      queryClient.cancelQueries({ queryKey: AUTH_USER_QUERY_KEY }),
     mutationFn: async (data: LoginInput): Promise<User> => {
       const response = await axiosClient.post<AuthResponse>(
         `${getBaseUrl()}/auth/login`,
@@ -39,6 +51,7 @@ export function useLoginMutation() {
       return response.data.user
     },
     onSuccess: (user) => {
+      markSessionAuthenticated()
       queryClient.setQueryData(AUTH_USER_QUERY_KEY, user)
       navigate({ to: ROUTES.dashboard })
     },
@@ -50,8 +63,10 @@ export function useGoogleLoginMutation() {
   const navigate = useNavigate()
 
   return useMutation({
+    onMutate: () =>
+      queryClient.cancelQueries({ queryKey: AUTH_USER_QUERY_KEY }),
     mutationFn: async (data: GoogleAuthInput): Promise<User> => {
-      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
+      const timezone = data.timezone ?? getDefaultTimezone()
       const response = await axiosClient.post<AuthResponse>(
         `${getBaseUrl()}/auth/google`,
         { ...data, timezone },
@@ -59,7 +74,11 @@ export function useGoogleLoginMutation() {
       )
       return response.data.user
     },
-    onSuccess: (user) => {
+    onSuccess: (user, variables) => {
+      markSessionAuthenticated()
+      if (variables.timezone) {
+        dismissTimezoneMismatch(user.id, user.timezone)
+      }
       queryClient.setQueryData(AUTH_USER_QUERY_KEY, user)
       navigate({ to: ROUTES.dashboard })
     },
@@ -67,16 +86,16 @@ export function useGoogleLoginMutation() {
 }
 
 export function useRegisterMutation() {
+  const queryClient = useQueryClient()
   const navigate = useNavigate()
 
   return useMutation({
-    mutationFn: async (
-      data: Omit<RegisterInput, 'timezone'>,
-    ): Promise<RegisterResponse> => {
-      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
+    onMutate: () =>
+      queryClient.cancelQueries({ queryKey: AUTH_USER_QUERY_KEY }),
+    mutationFn: async (data: RegisterInput): Promise<RegisterResponse> => {
       const response = await axiosClient.post<RegisterResponse>(
         `${getBaseUrl()}/auth/register`,
-        { ...data, timezone },
+        data,
         { fetcherOptions: { skipAuthRedirect: true } },
       )
       return response.data
@@ -97,6 +116,8 @@ export function useVerifyEmailMutation() {
   const navigate = useNavigate()
 
   return useMutation({
+    onMutate: () =>
+      queryClient.cancelQueries({ queryKey: AUTH_USER_QUERY_KEY }),
     mutationFn: async (data: VerifyEmailInput): Promise<User> => {
       const response = await axiosClient.post<AuthResponse>(
         `${getBaseUrl()}/auth/verify-email`,
@@ -106,6 +127,8 @@ export function useVerifyEmailMutation() {
       return response.data.user
     },
     onSuccess: (user) => {
+      markSessionAuthenticated()
+      dismissTimezoneMismatch(user.id, user.timezone)
       queryClient.setQueryData(AUTH_USER_QUERY_KEY, user)
       navigate({ to: ROUTES.dashboard })
     },
@@ -122,9 +145,33 @@ export function useResendVerificationMutation() {
   })
 }
 
+export function useUpdateCurrentUserMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (data: UpdateCurrentUserInput): Promise<User> => {
+      const response = await axiosClient.patch<AuthResponse>(
+        `${getBaseUrl()}/auth/me`,
+        data,
+      )
+      return response.data.user
+    },
+    onSuccess: (user) => {
+      dismissTimezoneMismatch(user.id, user.timezone)
+      queryClient.setQueryData(AUTH_USER_QUERY_KEY, user)
+    },
+  })
+}
+
 export function useLogoutMutation() {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
+
+  const completeLocalLogout = () => {
+    markSessionSignedOut()
+    queryClient.clear()
+    navigate({ to: ROUTES.login })
+  }
 
   return useMutation({
     mutationFn: async (): Promise<void> => {
@@ -132,10 +179,11 @@ export function useLogoutMutation() {
         fetcherOptions: { skipAuthRedirect: true },
       })
     },
-    onSuccess: () => {
-      queryClient.removeQueries({ queryKey: AUTH_USER_QUERY_KEY })
-      queryClient.clear()
-      navigate({ to: ROUTES.login })
+    onSuccess: completeLocalLogout,
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        completeLocalLogout()
+      }
     },
   })
 }

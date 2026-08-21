@@ -11,7 +11,7 @@ import { getAuthErrorMessage, getFieldError, parseApiError } from '@/lib/utils'
 import { cn } from '@/lib/utils/cn'
 
 export const Route = createFileRoute('/login')({
-  beforeLoad: ({ context }) => requireGuest(context.queryClient),
+  beforeLoad: requireGuest,
   component: LoginPage,
 })
 

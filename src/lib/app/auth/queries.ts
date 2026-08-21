@@ -5,10 +5,10 @@ export const AUTH_USER_QUERY_KEY = ['auth', 'user'] as const
 
 export const currentUserQueryOptions = queryOptions({
   queryKey: AUTH_USER_QUERY_KEY,
-  queryFn: getCurrentUser,
+  queryFn: ({ signal }) => getCurrentUser(signal),
   retry: false,
 })
 
-export function useCurrentUserQuery() {
-  return useQuery(currentUserQueryOptions)
+export function useCurrentUserQuery(enabled = true) {
+  return useQuery({ ...currentUserQueryOptions, enabled })
 }

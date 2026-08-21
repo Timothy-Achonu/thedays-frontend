@@ -7,13 +7,18 @@ export interface LoginInput {
 
 export interface GoogleAuthInput {
   idToken: string
+  timezone?: string
 }
 
 export interface RegisterInput {
   username: string
   email: string
   password: string
-  timezone?: string
+  timezone: string
+}
+
+export interface UpdateCurrentUserInput {
+  timezone: string
 }
 
 export interface AuthResponse {

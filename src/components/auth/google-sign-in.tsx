@@ -4,10 +4,15 @@ import { getAuthErrorMessage, parseApiError } from '@/lib/utils'
 
 type GoogleSignInProps = {
   disabled?: boolean
+  timezone?: string
   onError: (message: string) => void
 }
 
-export function GoogleSignIn({ disabled = false, onError }: GoogleSignInProps) {
+export function GoogleSignIn({
+  disabled = false,
+  timezone,
+  onError,
+}: GoogleSignInProps) {
   const googleLoginMutation = useGoogleLoginMutation()
 
   return (
@@ -16,7 +21,7 @@ export function GoogleSignIn({ disabled = false, onError }: GoogleSignInProps) {
       disabled={disabled || googleLoginMutation.isPending}
       onCredential={(idToken) => {
         googleLoginMutation.mutate(
-          { idToken },
+          { idToken, ...(timezone ? { timezone } : {}) },
           {
             onError: (error) => {
               onError(getAuthErrorMessage(parseApiError(error).code))
