@@ -150,6 +150,10 @@ function VerifyEmailPage() {
           setResendNotice(
             'If an account needs verification, we sent a new code.',
           )
+          void navigate({
+            search: { email: searchEmail },
+            replace: true,
+          })
         },
         onError: (error) => {
           setFormError(getAuthErrorMessage(parseApiError(error).code))
@@ -163,7 +167,11 @@ function VerifyEmailPage() {
   return (
     <AuthLayout
       title="Check your email"
-      subtitle="Enter the 6-digit code we sent to verify your account"
+      subtitle={
+        deliveryFailed
+          ? 'Resend your verification code to continue'
+          : 'Enter the 6-digit code we sent to verify your account'
+      }
     >
       <Card
         variant="elevated"
@@ -200,26 +208,24 @@ function VerifyEmailPage() {
               Continue
             </Button>
           </form>
+        ) : deliveryFailed ? (
+          <Button
+            type="button"
+            fullWidth
+            size="lg"
+            isLoading={resendMutation.isPending}
+            onClick={handleResend}
+          >
+            Resend code
+          </Button>
         ) : (
           <>
             <p className="mb-5 text-sm text-earth-600">
-              {deliveryFailed ? (
-                <>
-                  Use{' '}
-                  <span className="font-medium text-earth-900">
-                    {searchEmail}
-                  </span>{' '}
-                  and resend a code to continue.
-                </>
-              ) : (
-                <>
-                  We sent a code to{' '}
-                  <span className="font-medium text-earth-900">
-                    {searchEmail}
-                  </span>
-                  .
-                </>
-              )}
+              We sent a code to{' '}
+              <span className="font-medium text-earth-900">
+                {searchEmail}
+              </span>
+              .
             </p>
 
             {resendNotice && (
