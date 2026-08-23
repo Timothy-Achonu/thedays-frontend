@@ -9,7 +9,7 @@ export const Route = createFileRoute('/_authenticated/trackers/new')({
 function NewTrackerPage() {
   return (
     <RouteStub
-      title="Create TheDays"
+      title="Create Days Tracker"
       description="Define a title, start date, and completion mode for a new tracker."
       links={[{ to: ROUTES.dashboard, label: 'Back to dashboard' }]}
     />

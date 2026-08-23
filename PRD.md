@@ -303,6 +303,7 @@ User
 
 id
 username
+canChangeUsername
 email
 passwordHash
 timezone
@@ -316,6 +317,7 @@ Example:
 {
   id: "user_123",
   username: "example_user",
+  canChangeUsername: false,
   email: "user@example.com",
   passwordHash: "...",
   timezone: "Africa/Lagos",
@@ -1399,9 +1401,17 @@ PATCH /api/auth/me
 
 ```json
 {
+  "username": "example_user",
   "timezone": "Africa/Lagos"
 }
 ```
+
+Both fields are optional, but at least one must be provided. Timezone changes apply immediately to
+future current-day calculations and do not rewrite existing date-only history. A Google-created
+account whose username was generated automatically may choose a different valid username once;
+the successful change permanently consumes that capability. Password accounts, including accounts
+that later link Google, cannot use this one-time username choice. Current-user responses include
+`canChangeUsername` so clients do not infer account capabilities from authentication internals.
 
 ---
 

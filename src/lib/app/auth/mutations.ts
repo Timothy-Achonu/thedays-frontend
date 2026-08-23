@@ -184,8 +184,10 @@ export function useUpdateCurrentUserMutation() {
       )
       return response.data.user
     },
-    onSuccess: (user) => {
-      dismissTimezoneMismatch(user.id, user.timezone)
+    onSuccess: (user, variables) => {
+      if (variables.timezone !== undefined) {
+        dismissTimezoneMismatch(user.id, user.timezone)
+      }
       queryClient.setQueryData(AUTH_USER_QUERY_KEY, user)
     },
   })

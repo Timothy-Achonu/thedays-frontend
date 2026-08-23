@@ -9,6 +9,7 @@ import {
 import { isUnauthorizedError } from '@/lib/auth/guards'
 import { markSessionSignedOut } from '@/lib/auth/session-state'
 import { ROUTES } from '@/lib/constants/routes'
+import { AppShell } from '@/components/app-shell'
 
 export function AuthenticatedLayout() {
   const queryClient = useQueryClient()
@@ -29,7 +30,11 @@ export function AuthenticatedLayout() {
   }
 
   if (currentUserQuery.data) {
-    return <Outlet />
+    return (
+      <AppShell user={currentUserQuery.data}>
+        <Outlet />
+      </AppShell>
+    )
   }
 
   if (currentUserQuery.isFetching) {

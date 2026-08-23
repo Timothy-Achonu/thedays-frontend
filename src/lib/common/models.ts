@@ -57,6 +57,7 @@ export type CursorPaginationQueryProps = {
 export type User = {
   id: string
   username: string
+  canChangeUsername: boolean
   email: string
   timezone: string
   createdAt: string

@@ -18,7 +18,8 @@ export interface RegisterInput {
 }
 
 export interface UpdateCurrentUserInput {
-  timezone: string
+  username?: string
+  timezone?: string
 }
 
 export interface AuthResponse {
@@ -71,6 +72,9 @@ export type AuthErrorCode =
   | 'USE_GOOGLE_SIGN_IN'
   | 'INVALID_GOOGLE_TOKEN'
   | 'USERNAME_TAKEN'
+  | 'USERNAME_CHANGE_NOT_ALLOWED'
+  | 'USERNAME_UNCHANGED'
+  | 'USERNAME_CHANGE_CONFLICT'
   | 'EMAIL_ALREADY_REGISTERED'
   | 'EMAIL_NOT_VERIFIED'
   | 'EMAIL_DELIVERY_FAILED'

@@ -72,6 +72,12 @@ export function getAuthErrorMessage(code: AuthErrorCode | string): string {
       return 'Google sign-in failed. Please try again.'
     case 'USERNAME_TAKEN':
       return 'This username is already taken. Please choose another.'
+    case 'USERNAME_CHANGE_NOT_ALLOWED':
+      return 'This account can no longer change its username.'
+    case 'USERNAME_UNCHANGED':
+      return 'Choose a different username.'
+    case 'USERNAME_CHANGE_CONFLICT':
+      return 'Your username settings changed. Refresh and try again.'
     case 'EMAIL_ALREADY_REGISTERED':
       return 'An account with this email already exists. Try signing in instead.'
     case 'EMAIL_NOT_VERIFIED':
