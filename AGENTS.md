@@ -19,7 +19,11 @@ Before answering, planning, or changing code, **scan the project skills**. Curso
 4. **Keep equivalents aligned:** When changing a project skill, update both the Cursor copy and its Codex equivalent when both exist.
 5. **User/global skills:** If the environment also exposes skills under the user’s global `.cursor/skills-cursor`, global `.codex/skills`, or similar, consider those when the task matches their descriptions, but prefer the project-local copy when this repo has one.
 
-When in doubt, prefer **`code-pattern`** for any code or plan that touches implementation. Prefer **`ui-design-fidelity`** over **`good-frontend-design`** when a visual reference exists.
+When in doubt, prefer **`code-pattern`** for any code or plan that touches implementation.
+
+**Mandatory:** When creating or modifying ANY user interface (components, pages, styling, layouts, visual details), ALWAYS load a UI skill first (via the skill tool) and follow it: use `ui-design-fidelity` when a visual reference exists (screenshot, Figma, mockup), otherwise `good-frontend-design`. Prefer `ui-design-fidelity` whenever a reference is present. This applies regardless of how small the UI change is.
+
+**Mandatory:** When creating or revising ANY implementation plan, ALWAYS load the `grill-me` skill first (via the skill tool) and apply it before writing the plan — regardless of how the request is phrased. This rule applies to every agent, including plan mode.
 
 ## Scope and safety
 
