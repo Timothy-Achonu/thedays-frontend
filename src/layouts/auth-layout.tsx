@@ -16,16 +16,24 @@ interface AuthLayoutProps {
   children: ReactNode
   title: string
   subtitle?: string
+  redirectAuthenticated?: boolean
 }
 
-export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
+export function AuthLayout({
+  children,
+  title,
+  subtitle,
+  redirectAuthenticated = true,
+}: AuthLayoutProps) {
   const [initialSessionState] = useState(getSessionState)
   const navigate = useNavigate()
   const currentUserQuery = useCurrentUserQuery(
-    initialSessionState === 'unknown',
+    redirectAuthenticated && initialSessionState === 'unknown',
   )
 
   useEffect(() => {
+    if (!redirectAuthenticated) return
+
     if (currentUserQuery.isSuccess) {
       markSessionAuthenticated()
       void navigate({ to: ROUTES.dashboard, replace: true })
@@ -43,6 +51,7 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
     currentUserQuery.isError,
     currentUserQuery.isSuccess,
     navigate,
+    redirectAuthenticated,
   ])
 
   return (

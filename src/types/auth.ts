@@ -39,6 +39,19 @@ export interface ResendVerificationInput {
   email: string
 }
 
+export interface ForgotPasswordInput {
+  email: string
+}
+
+export interface ForgotPasswordResponse {
+  message: string
+}
+
+export interface ResetPasswordInput {
+  token: string
+  newPassword: string
+}
+
 export interface ApiErrorDetails {
   formErrors?: Array<string>
   fieldErrors?: Record<string, Array<string>>
@@ -62,6 +75,7 @@ export type AuthErrorCode =
   | 'EMAIL_NOT_VERIFIED'
   | 'EMAIL_DELIVERY_FAILED'
   | 'INVALID_OR_EXPIRED_CODE'
+  | 'INVALID_OR_EXPIRED_RESET_TOKEN'
   | 'REGISTRATION_CONFLICT'
   | 'RATE_LIMIT_EXCEEDED'
   | 'INTERNAL_SERVER_ERROR'

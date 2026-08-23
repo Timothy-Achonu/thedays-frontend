@@ -107,6 +107,8 @@ Suggested application routes include:
 /
  /login
  /register
+ /forgot-password
+ /reset-password
  /dashboard
  /trackers/new
  /trackers/:trackerId
@@ -244,6 +246,8 @@ Users must be able to:
 - Register.
 - Log in.
 - Log out.
+- Request a password reset.
+- Set a new password from a valid emailed reset link.
 - Remain authenticated across page refreshes and browser sessions, according to session policy.
 
 ## Registration
@@ -265,6 +269,12 @@ The username must be unique. Usernames are normalized to lowercase, must be 3–
 Passwords must never be stored in plain text.
 
 Passwords should be securely hashed using a modern password hashing algorithm such as Argon2.
+
+## Password Recovery
+
+Password recovery is available only to verified accounts that already have a password. Google-only accounts must continue with Google sign-in; a Google-linked account that already has a password may reset it.
+
+Requesting a reset must not reveal whether an email belongs to an eligible account. Eligible users receive a high-entropy, single-use link at the saved email address. The raw token must not be stored in the database or logs. Reset links expire after 30 minutes, and successful use must revoke all existing sessions and require a fresh login.
 
 ---
 
@@ -1340,6 +1350,35 @@ Example body:
 POST /api/auth/login
 ```
 
+## Forgot Password
+
+```http
+POST /api/auth/forgot-password
+```
+
+```json
+{
+  "email": "user@example.com"
+}
+```
+
+The endpoint returns the same generic `202` response for eligible, ineligible, cooldown, and email-delivery-failure cases.
+
+## Reset Password
+
+```http
+POST /api/auth/reset-password
+```
+
+```json
+{
+  "token": "opaque-reset-token",
+  "newPassword": "..."
+}
+```
+
+A successful reset returns `204`, consumes the token, revokes all account sessions, and clears the current session cookie. Invalid, expired, replaced, or consumed tokens return `400 INVALID_OR_EXPIRED_RESET_TOKEN`.
+
 ## Logout
 
 ```http
@@ -1593,6 +1632,22 @@ Enters username, email, and password
 Account is created
         ↓
 User enters dashboard
+```
+
+## Password Recovery Flow
+
+```text
+User selects Forgot Password
+        ↓
+Submits email and receives the same generic confirmation in all cases
+        ↓
+Eligible user opens the emailed /reset-password#token=... link
+        ↓
+Frontend removes the token from the visible URL and submits it with the new password
+        ↓
+Backend consumes the token, changes the password, and revokes all sessions
+        ↓
+User signs in again with the new password
 ```
 
 ---

@@ -19,6 +19,8 @@ const UNAUTHENTICATED_AUTH_PATHS = [
   '/auth/google',
   '/auth/verify-email',
   '/auth/resend-verification',
+  '/auth/forgot-password',
+  '/auth/reset-password',
 ] as const
 
 function requestPathname(url: string | undefined): string | undefined {

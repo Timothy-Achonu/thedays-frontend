@@ -3,6 +3,8 @@ export const ROUTES = {
   login: '/login',
   register: '/register',
   verifyEmail: '/verify-email',
+  forgotPassword: '/forgot-password',
+  resetPassword: '/reset-password',
   dashboard: '/dashboard',
   settings: '/settings',
   trackers: {

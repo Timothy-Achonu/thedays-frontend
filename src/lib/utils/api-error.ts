@@ -80,6 +80,8 @@ export function getAuthErrorMessage(code: AuthErrorCode | string): string {
       return 'We could not send the verification email. Please try resending the code.'
     case 'INVALID_OR_EXPIRED_CODE':
       return 'Invalid or expired verification code. Please try again.'
+    case 'INVALID_OR_EXPIRED_RESET_TOKEN':
+      return 'This password reset link is invalid or has expired.'
     case 'REGISTRATION_CONFLICT':
       return 'An account with these details already exists.'
     case 'RATE_LIMIT_EXCEEDED':

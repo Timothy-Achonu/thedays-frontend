@@ -125,15 +125,13 @@ function LoginPage() {
             />
           </div>
 
-          {/* Forgot Password Link */}
           <div className="flex justify-end animate-fade-in-up stagger-3">
-            <button
-              type="button"
+            <Link
+              to={ROUTES.forgotPassword}
               className="text-sm text-terracotta-600 hover:text-terracotta-700 font-medium focus-ring rounded"
-              onClick={() => setFormError('Password reset coming soon!')}
             >
               Forgot password?
-            </button>
+            </Link>
           </div>
 
           {/* Submit Button */}

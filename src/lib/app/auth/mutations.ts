@@ -3,11 +3,14 @@ import { useNavigate } from '@tanstack/react-router'
 import { AUTH_USER_QUERY_KEY } from './queries'
 import type {
   AuthResponse,
+  ForgotPasswordInput,
+  ForgotPasswordResponse,
   GoogleAuthInput,
   LoginInput,
   RegisterInput,
   RegisterResponse,
   ResendVerificationInput,
+  ResetPasswordInput,
   UpdateCurrentUserInput,
   VerifyEmailInput,
 } from '@/types/auth'
@@ -139,6 +142,31 @@ export function useResendVerificationMutation() {
   return useMutation({
     mutationFn: async (data: ResendVerificationInput): Promise<void> => {
       await axiosClient.post(`${getBaseUrl()}/auth/resend-verification`, data, {
+        fetcherOptions: { skipAuthRedirect: true },
+      })
+    },
+  })
+}
+
+export function useForgotPasswordMutation() {
+  return useMutation({
+    mutationFn: async (
+      data: ForgotPasswordInput,
+    ): Promise<ForgotPasswordResponse> => {
+      const response = await axiosClient.post<ForgotPasswordResponse>(
+        `${getBaseUrl()}/auth/forgot-password`,
+        data,
+        { fetcherOptions: { skipAuthRedirect: true } },
+      )
+      return response.data
+    },
+  })
+}
+
+export function useResetPasswordMutation() {
+  return useMutation({
+    mutationFn: async (data: ResetPasswordInput): Promise<void> => {
+      await axiosClient.post(`${getBaseUrl()}/auth/reset-password`, data, {
         fetcherOptions: { skipAuthRedirect: true },
       })
     },
