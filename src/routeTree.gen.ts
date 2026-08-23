@@ -10,23 +10,23 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as RegisterRouteImport } from './routes/register'
-import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as VerifyEmailRouteImport } from './routes/verify-email'
-import { Route as TrackersNewRouteImport } from './routes/trackers/new'
-import { Route as TrackersTrackerIdIndexRouteImport } from './routes/trackers/$trackerId/index'
-import { Route as TrackersTrackerIdEditRouteImport } from './routes/trackers/$trackerId/edit'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedTrackersNewRouteImport } from './routes/_authenticated/trackers/new'
+import { Route as AuthenticatedTrackersTrackerIdIndexRouteImport } from './routes/_authenticated/trackers/$trackerId/index'
+import { Route as AuthenticatedTrackersTrackerIdEditRouteImport } from './routes/_authenticated/trackers/$trackerId/edit'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DashboardRoute = DashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
+const AuthenticatedRoute = AuthenticatedRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -39,112 +39,118 @@ const RegisterRoute = RegisterRouteImport.update({
   path: '/register',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SettingsRoute = SettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const VerifyEmailRoute = VerifyEmailRouteImport.update({
   id: '/verify-email',
   path: '/verify-email',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TrackersNewRoute = TrackersNewRouteImport.update({
-  id: '/trackers/new',
-  path: '/trackers/new',
-  getParentRoute: () => rootRouteImport,
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
-const TrackersTrackerIdIndexRoute = TrackersTrackerIdIndexRouteImport.update({
-  id: '/trackers/$trackerId/',
-  path: '/trackers/$trackerId/',
-  getParentRoute: () => rootRouteImport,
+const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
-const TrackersTrackerIdEditRoute = TrackersTrackerIdEditRouteImport.update({
-  id: '/trackers/$trackerId/edit',
-  path: '/trackers/$trackerId/edit',
-  getParentRoute: () => rootRouteImport,
-} as any)
+const AuthenticatedTrackersNewRoute =
+  AuthenticatedTrackersNewRouteImport.update({
+    id: '/trackers/new',
+    path: '/trackers/new',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedTrackersTrackerIdIndexRoute =
+  AuthenticatedTrackersTrackerIdIndexRouteImport.update({
+    id: '/trackers/$trackerId/',
+    path: '/trackers/$trackerId/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedTrackersTrackerIdEditRoute =
+  AuthenticatedTrackersTrackerIdEditRouteImport.update({
+    id: '/trackers/$trackerId/edit',
+    path: '/trackers/$trackerId/edit',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
-  '/settings': typeof SettingsRoute
   '/verify-email': typeof VerifyEmailRoute
-  '/trackers/new': typeof TrackersNewRoute
-  '/trackers/$trackerId/edit': typeof TrackersTrackerIdEditRoute
-  '/trackers/$trackerId/': typeof TrackersTrackerIdIndexRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/settings': typeof AuthenticatedSettingsRoute
+  '/trackers/new': typeof AuthenticatedTrackersNewRoute
+  '/trackers/$trackerId/edit': typeof AuthenticatedTrackersTrackerIdEditRoute
+  '/trackers/$trackerId/': typeof AuthenticatedTrackersTrackerIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
-  '/settings': typeof SettingsRoute
   '/verify-email': typeof VerifyEmailRoute
-  '/trackers/new': typeof TrackersNewRoute
-  '/trackers/$trackerId/edit': typeof TrackersTrackerIdEditRoute
-  '/trackers/$trackerId': typeof TrackersTrackerIdIndexRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/settings': typeof AuthenticatedSettingsRoute
+  '/trackers/new': typeof AuthenticatedTrackersNewRoute
+  '/trackers/$trackerId/edit': typeof AuthenticatedTrackersTrackerIdEditRoute
+  '/trackers/$trackerId': typeof AuthenticatedTrackersTrackerIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/dashboard': typeof DashboardRoute
+  '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
-  '/settings': typeof SettingsRoute
   '/verify-email': typeof VerifyEmailRoute
-  '/trackers/new': typeof TrackersNewRoute
-  '/trackers/$trackerId/edit': typeof TrackersTrackerIdEditRoute
-  '/trackers/$trackerId/': typeof TrackersTrackerIdIndexRoute
+  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/_authenticated/trackers/new': typeof AuthenticatedTrackersNewRoute
+  '/_authenticated/trackers/$trackerId/edit': typeof AuthenticatedTrackersTrackerIdEditRoute
+  '/_authenticated/trackers/$trackerId/': typeof AuthenticatedTrackersTrackerIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/dashboard'
     | '/login'
     | '/register'
-    | '/settings'
     | '/verify-email'
+    | '/dashboard'
+    | '/settings'
     | '/trackers/new'
     | '/trackers/$trackerId/edit'
     | '/trackers/$trackerId/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/dashboard'
     | '/login'
     | '/register'
-    | '/settings'
     | '/verify-email'
+    | '/dashboard'
+    | '/settings'
     | '/trackers/new'
     | '/trackers/$trackerId/edit'
     | '/trackers/$trackerId'
   id:
     | '__root__'
     | '/'
-    | '/dashboard'
+    | '/_authenticated'
     | '/login'
     | '/register'
-    | '/settings'
     | '/verify-email'
-    | '/trackers/new'
-    | '/trackers/$trackerId/edit'
-    | '/trackers/$trackerId/'
+    | '/_authenticated/dashboard'
+    | '/_authenticated/settings'
+    | '/_authenticated/trackers/new'
+    | '/_authenticated/trackers/$trackerId/edit'
+    | '/_authenticated/trackers/$trackerId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  DashboardRoute: typeof DashboardRoute
+  AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
-  SettingsRoute: typeof SettingsRoute
   VerifyEmailRoute: typeof VerifyEmailRoute
-  TrackersNewRoute: typeof TrackersNewRoute
-  TrackersTrackerIdEditRoute: typeof TrackersTrackerIdEditRoute
-  TrackersTrackerIdIndexRoute: typeof TrackersTrackerIdIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -156,11 +162,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/dashboard': {
-      id: '/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardRouteImport
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -177,13 +183,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RegisterRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/settings': {
-      id: '/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof SettingsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/verify-email': {
       id: '/verify-email'
       path: '/verify-email'
@@ -191,40 +190,72 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof VerifyEmailRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/trackers/new': {
-      id: '/trackers/new'
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/settings': {
+      id: '/_authenticated/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/trackers/new': {
+      id: '/_authenticated/trackers/new'
       path: '/trackers/new'
       fullPath: '/trackers/new'
-      preLoaderRoute: typeof TrackersNewRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedTrackersNewRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
-    '/trackers/$trackerId/': {
-      id: '/trackers/$trackerId/'
+    '/_authenticated/trackers/$trackerId/': {
+      id: '/_authenticated/trackers/$trackerId/'
       path: '/trackers/$trackerId'
       fullPath: '/trackers/$trackerId/'
-      preLoaderRoute: typeof TrackersTrackerIdIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedTrackersTrackerIdIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
-    '/trackers/$trackerId/edit': {
-      id: '/trackers/$trackerId/edit'
+    '/_authenticated/trackers/$trackerId/edit': {
+      id: '/_authenticated/trackers/$trackerId/edit'
       path: '/trackers/$trackerId/edit'
       fullPath: '/trackers/$trackerId/edit'
-      preLoaderRoute: typeof TrackersTrackerIdEditRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedTrackersTrackerIdEditRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
   }
 }
 
+interface AuthenticatedRouteChildren {
+  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+  AuthenticatedTrackersNewRoute: typeof AuthenticatedTrackersNewRoute
+  AuthenticatedTrackersTrackerIdEditRoute: typeof AuthenticatedTrackersTrackerIdEditRoute
+  AuthenticatedTrackersTrackerIdIndexRoute: typeof AuthenticatedTrackersTrackerIdIndexRoute
+}
+
+const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
+  AuthenticatedTrackersNewRoute: AuthenticatedTrackersNewRoute,
+  AuthenticatedTrackersTrackerIdEditRoute:
+    AuthenticatedTrackersTrackerIdEditRoute,
+  AuthenticatedTrackersTrackerIdIndexRoute:
+    AuthenticatedTrackersTrackerIdIndexRoute,
+}
+
+const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
+  AuthenticatedRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  DashboardRoute: DashboardRoute,
+  AuthenticatedRoute: AuthenticatedRouteWithChildren,
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
-  SettingsRoute: SettingsRoute,
   VerifyEmailRoute: VerifyEmailRoute,
-  TrackersNewRoute: TrackersNewRoute,
-  TrackersTrackerIdEditRoute: TrackersTrackerIdEditRoute,
-  TrackersTrackerIdIndexRoute: TrackersTrackerIdIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

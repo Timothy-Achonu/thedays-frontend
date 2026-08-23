@@ -6,13 +6,11 @@ import {
   useCurrentUserQuery,
   useUpdateCurrentUserMutation,
 } from '@/lib/app/auth'
-import { requireAuth } from '@/lib/auth/guards'
 import { ROUTES } from '@/lib/constants/routes'
 import { getFieldError, parseApiError } from '@/lib/utils'
 import { getCalendarDateInTimezone } from '@/lib/utils/timezone'
 
-export const Route = createFileRoute('/settings')({
-  beforeLoad: ({ context }) => requireAuth(context.queryClient),
+export const Route = createFileRoute('/_authenticated/settings')({
   component: SettingsPage,
 })
 
