@@ -1,4 +1,5 @@
 import { Link } from '@tanstack/react-router'
+import { Popover, PopoverButton, PopoverPanel } from '@headlessui/react'
 import type { ComponentType, ReactNode } from 'react'
 import type { User } from '@/lib/common/models'
 import { useLogoutMutation } from '@/lib/app/auth'
@@ -62,18 +63,19 @@ export function AppShell({ user, children }: AppShellProps) {
             <TabletNavigationLink key={item.to} item={item} />
           ))}
         </nav>
-        <div className="mt-auto grid size-10 place-items-center rounded-full bg-earth-800 text-sm font-semibold text-sand-200">
-          {initials}
-        </div>
       </aside>
 
       <div className="min-w-0 flex-1 pb-24 md:flex md:min-h-0 md:flex-col md:overflow-hidden md:pb-0">
-        <div className="border-b border-earth-100 bg-earth-50/90 px-5 py-4 backdrop-blur md:px-8 lg:hidden">
+        <div className="relative z-40 border-b border-earth-100 bg-earth-50/90 px-5 py-4 backdrop-blur md:px-8 lg:hidden">
           <div className="flex items-center justify-between">
             <Logo size="sm" />
-            <span className="grid size-9 place-items-center rounded-full bg-sage-100 text-sm font-semibold text-sage-700">
-              {initials}
-            </span>
+            <ResponsiveAccountMenu
+              initials={initials}
+              username={user.username}
+              onLogout={() => logoutMutation.mutate()}
+              isLoggingOut={logoutMutation.isPending}
+              hasLogoutError={logoutMutation.isError}
+            />
           </div>
         </div>
         <div
@@ -95,6 +97,65 @@ export function AppShell({ user, children }: AppShellProps) {
         </div>
       </nav>
     </div>
+  )
+}
+
+function ResponsiveAccountMenu({
+  initials,
+  username,
+  onLogout,
+  isLoggingOut,
+  hasLogoutError,
+}: {
+  initials: string
+  username: string
+  onLogout: () => void
+  isLoggingOut: boolean
+  hasLogoutError: boolean
+}) {
+  return (
+    <Popover className="relative">
+      <PopoverButton
+        aria-label={`Open account menu for ${username}`}
+        className="grid size-10 place-items-center rounded-full bg-sage-100 text-sm font-semibold text-sage-700 transition-colors hover:bg-sage-200 focus-ring data-[open]:bg-sage-200"
+      >
+        {initials}
+      </PopoverButton>
+
+      <PopoverPanel
+        transition
+        role="dialog"
+        aria-label="Account menu"
+        className="absolute right-0 z-40 mt-3 w-[min(18rem,calc(100vw-2.5rem))] origin-top-right rounded-2xl border border-earth-200/80 bg-white p-2 shadow-organic-lg transition duration-150 ease-out data-[closed]:translate-y-1 data-[closed]:scale-95 data-[closed]:opacity-0"
+      >
+        <div className="flex items-center gap-3 rounded-xl bg-earth-50 px-3 py-3">
+          <div className="grid size-10 shrink-0 place-items-center rounded-full bg-sage-700 text-sm font-semibold text-sage-50">
+            {initials}
+          </div>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-earth-900">
+              {username}
+            </p>
+            <p className="text-xs text-earth-500">Your account</p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={onLogout}
+          disabled={isLoggingOut}
+          className="mt-1 flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-earth-600 transition-colors hover:bg-earth-100 hover:text-earth-900 focus-ring disabled:cursor-wait disabled:opacity-60"
+        >
+          <LogOutIcon className="size-5" />
+          {isLoggingOut ? 'Signing out…' : 'Log out'}
+        </button>
+        {hasLogoutError ? (
+          <p role="alert" className="px-3 pb-2 pt-1 text-xs text-error-700">
+            Couldn&apos;t log out. Try again.
+          </p>
+        ) : null}
+      </PopoverPanel>
+    </Popover>
   )
 }
 
