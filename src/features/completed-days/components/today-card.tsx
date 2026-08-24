@@ -1,6 +1,8 @@
+import { useIsMutating } from '@tanstack/react-query'
 import { getPrimaryDay } from '../../trackers/daily-status'
 import type { Tracker } from '@/types/trackers'
 import {
+  COMPLETED_DAY_MUTATION_KEY,
   useMarkCompletedDayMutation,
   useUnmarkCompletedDayMutation,
 } from '@/lib/app/trackers'
@@ -26,6 +28,8 @@ export function TodayCard({
 }: TodayCardProps) {
   const markMutation = useMarkCompletedDayMutation()
   const unmarkMutation = useUnmarkCompletedDayMutation()
+  const isCompletionPending =
+    useIsMutating({ mutationKey: COMPLETED_DAY_MUTATION_KEY }) > 0
 
   const primaryDay = getPrimaryDay(tracker, today)
   const primaryCompleted = primaryDay
@@ -61,6 +65,8 @@ export function TodayCard({
   }
 
   const isPrimaryToday = primaryDay.date === today
+  const isBusy =
+    markMutation.isPending || unmarkMutation.isPending || isCompletionPending
 
   return (
     <section className="animate-fade-in-up relative overflow-hidden rounded-3xl border border-earth-100 bg-white p-7 shadow-organic-md">
@@ -83,7 +89,7 @@ export function TodayCard({
           type="button"
           role="checkbox"
           aria-checked={primaryCompleted}
-          disabled={markMutation.isPending || unmarkMutation.isPending}
+          disabled={isBusy}
           onClick={() => toggle(primaryDay.date, primaryCompleted)}
           aria-label={`Mark ${formatDateString(primaryDay.date, 'long')} as completed`}
           className={[
@@ -92,13 +98,11 @@ export function TodayCard({
             primaryCompleted
               ? 'bg-sage-100 text-sage-800 ring-1 ring-inset ring-sage-300 hover:bg-sage-50 active:bg-sage-100'
               : 'bg-sage-600 text-white shadow-organic-md hover:bg-sage-700 active:bg-sage-800',
-            markMutation.isPending || unmarkMutation.isPending
-              ? 'cursor-wait opacity-80'
-              : '',
+            isBusy ? 'cursor-wait opacity-80' : '',
           ].join(' ')}
         >
           {primaryCompleted ? <CheckIcon /> : <CircleIcon />}
-          {markMutation.isPending || unmarkMutation.isPending ? (
+          {isBusy ? (
             <span>Saving…</span>
           ) : primaryCompleted ? (
             <span>{isPrimaryToday ? 'Completed' : 'Marked'}</span>

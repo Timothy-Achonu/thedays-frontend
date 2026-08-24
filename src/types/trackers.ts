@@ -60,6 +60,16 @@ export interface UnmarkCompletedDayInput {
   date: string
 }
 
+export interface CheckAllCompletedDaysResponse {
+  added: number
+  total: number
+}
+
+export interface ClearAllCompletedDaysResponse {
+  cleared: number
+  total: number
+}
+
 /** Landmark with server-computed progress against its tracker's current count. */
 export interface Landmark {
   id: string

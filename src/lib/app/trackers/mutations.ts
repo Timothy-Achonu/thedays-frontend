@@ -7,6 +7,8 @@ import {
   trackerQueryKey,
 } from './queries'
 import {
+  checkAllCompletedDays,
+  clearAllCompletedDays,
   createLandmark,
   createTracker,
   deleteLandmark,
@@ -31,6 +33,23 @@ import { ROUTES } from '@/lib/constants/routes'
 
 type OptimisticContext = {
   previousCompletedDays?: CompletedDaysResponse
+}
+
+export const COMPLETED_DAY_MUTATION_KEY = ['completed-day-mutations'] as const
+export const BULK_COMPLETED_DAY_MUTATION_KEY = [
+  ...COMPLETED_DAY_MUTATION_KEY,
+  'bulk',
+] as const
+
+async function refreshCompletionDependentQueries(
+  queryClient: ReturnType<typeof useQueryClient>,
+  trackerId: string,
+): Promise<void> {
+  await queryClient.invalidateQueries({ queryKey: trackerQueryKey(trackerId) })
+  await queryClient.refetchQueries({
+    queryKey: TRACKERS_QUERY_KEY,
+    exact: true,
+  })
 }
 
 export function useCreateTrackerMutation() {
@@ -102,6 +121,7 @@ export function useMarkCompletedDayMutation() {
   const queryClient = useQueryClient()
 
   return useMutation({
+    mutationKey: [...COMPLETED_DAY_MUTATION_KEY, 'mark'],
     mutationFn: async (input: MarkCompletedDayInput): Promise<void> => {
       await markCompletedDay(input)
     },
@@ -150,6 +170,7 @@ export function useUnmarkCompletedDayMutation() {
   const queryClient = useQueryClient()
 
   return useMutation({
+    mutationKey: [...COMPLETED_DAY_MUTATION_KEY, 'unmark'],
     mutationFn: async (input: UnmarkCompletedDayInput): Promise<void> => {
       await unmarkCompletedDay(input)
     },
@@ -184,6 +205,28 @@ export function useUnmarkCompletedDayMutation() {
         exact: true,
       })
     },
+  })
+}
+
+export function useCheckAllCompletedDaysMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationKey: [...BULK_COMPLETED_DAY_MUTATION_KEY, 'check'],
+    mutationFn: checkAllCompletedDays,
+    onSuccess: (_response, trackerId) =>
+      refreshCompletionDependentQueries(queryClient, trackerId),
+  })
+}
+
+export function useClearAllCompletedDaysMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationKey: [...BULK_COMPLETED_DAY_MUTATION_KEY, 'clear'],
+    mutationFn: clearAllCompletedDays,
+    onSuccess: (_response, trackerId) =>
+      refreshCompletionDependentQueries(queryClient, trackerId),
   })
 }
 

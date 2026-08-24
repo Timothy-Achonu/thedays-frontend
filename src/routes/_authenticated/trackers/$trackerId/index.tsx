@@ -17,6 +17,7 @@ import { TrackerHeader } from '@/features/trackers/components/tracker-header'
 import { DeleteTrackerDialog } from '@/features/trackers/components/delete-tracker-dialog'
 import { TodayCard } from '@/features/completed-days/components/today-card'
 import { DayList } from '@/features/completed-days/components/day-list'
+import { BulkDayActions } from '@/features/completed-days/components/bulk-day-actions'
 import { LandmarkCard } from '@/features/landmarks/components/landmark-card'
 import { NextLandmarkCard } from '@/features/landmarks/components/next-landmark-card'
 import {
@@ -212,6 +213,7 @@ function TrackerDetailPage() {
 
           {daysQuery.isLoading ? (
             <div className="animate-pulse-soft space-y-2" aria-hidden="true">
+              <div className="mb-4 h-28 rounded-2xl border border-earth-100 bg-white/70" />
               {Array.from({ length: 5 }, (_, index) => (
                 <div
                   key={index}
@@ -219,13 +221,37 @@ function TrackerDetailPage() {
                 />
               ))}
             </div>
+          ) : daysQuery.isError ? (
+            <div className="rounded-2xl border border-error-200 bg-error-50 px-5 py-6 text-center">
+              <p className="font-medium text-error-700">
+                Day history could not be loaded.
+              </p>
+              <p className="mt-1 text-sm text-error-600">
+                Reload the history before changing individual or bulk day
+                states.
+              </p>
+              <button
+                type="button"
+                onClick={() => void daysQuery.refetch()}
+                className="mt-4 rounded-xl border border-error-300 bg-white px-4 py-2 text-sm font-semibold text-error-700 transition-colors hover:bg-error-100 focus-ring"
+              >
+                Try again
+              </button>
+            </div>
           ) : (
-            <DayList
-              tracker={tracker}
-              completedDates={completedDates}
-              today={today}
-              onError={setDayError}
-            />
+            <>
+              <BulkDayActions
+                tracker={tracker}
+                completedDates={completedDates}
+                today={today}
+              />
+              <DayList
+                tracker={tracker}
+                completedDates={completedDates}
+                today={today}
+                onError={setDayError}
+              />
+            </>
           )}
         </section>
       </div>

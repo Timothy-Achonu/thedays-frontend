@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react'
+import { useIsMutating } from '@tanstack/react-query'
 import { resolveDayState } from '../../trackers/daily-status'
 import type { DayState } from '../../trackers/daily-status'
 import type { Tracker } from '@/types/trackers'
 import {
+  COMPLETED_DAY_MUTATION_KEY,
   useMarkCompletedDayMutation,
   useUnmarkCompletedDayMutation,
 } from '@/lib/app/trackers'
@@ -37,6 +39,8 @@ export function DayList({
   const [visibleCount, setVisibleCount] = useState(INITIAL_BATCH)
   const markMutation = useMarkCompletedDayMutation()
   const unmarkMutation = useUnmarkCompletedDayMutation()
+  const isCompletionPending =
+    useIsMutating({ mutationKey: COMPLETED_DAY_MUTATION_KEY }) > 0
 
   const allDays = useMemo(
     () => enumerateDays(tracker.startDate, today).reverse(),
@@ -73,6 +77,7 @@ export function DayList({
             today={today}
             onToggle={toggle}
             index={index}
+            isBusy={isCompletionPending}
           />
         ))}
       </ol>
@@ -104,13 +109,13 @@ function DayRow({
   today,
   onToggle,
   index,
+  isBusy,
 }: Omit<DayListProps, 'onError'> & {
   date: string
   onToggle: (date: string, isCompleted: boolean) => void
   index: number
+  isBusy: boolean
 }) {
-  const markMutation = useMarkCompletedDayMutation()
-  const unmarkMutation = useUnmarkCompletedDayMutation()
   const isCompleted = completedDates.has(date)
   const state: DayState = resolveDayState(
     tracker.completionMode,
@@ -124,7 +129,6 @@ function DayRow({
       : date === addDaysToDate(today, -1)
         ? 'Yesterday'
         : null
-  const isBusy = markMutation.isPending || unmarkMutation.isPending
   const rowDelay = Math.min(index, 14) * 30
 
   return (

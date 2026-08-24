@@ -1,4 +1,6 @@
 import type {
+  CheckAllCompletedDaysResponse,
+  ClearAllCompletedDaysResponse,
   CompletedDaysResponse,
   CreateLandmarkInput,
   CreateTrackerInput,
@@ -89,6 +91,24 @@ export async function unmarkCompletedDay(
   await axiosClient.delete(
     `${trackerUrl(input.trackerId)}/completed-days/${input.date}`,
   )
+}
+
+export async function checkAllCompletedDays(
+  trackerId: string,
+): Promise<CheckAllCompletedDaysResponse> {
+  const response = await axiosClient.post<CheckAllCompletedDaysResponse>(
+    `${trackerUrl(trackerId)}/completed-days/check-all`,
+  )
+  return response.data
+}
+
+export async function clearAllCompletedDays(
+  trackerId: string,
+): Promise<ClearAllCompletedDaysResponse> {
+  const response = await axiosClient.delete<ClearAllCompletedDaysResponse>(
+    `${trackerUrl(trackerId)}/completed-days`,
+  )
+  return response.data
 }
 
 export async function listLandmarks(
