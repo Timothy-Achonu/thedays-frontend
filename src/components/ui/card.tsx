@@ -1,4 +1,5 @@
-import { forwardRef, type HTMLAttributes, type ReactNode } from 'react'
+import { forwardRef } from 'react'
+import type { HTMLAttributes, ReactNode } from 'react'
 import { cn } from '@/lib/utils/cn'
 
 interface CardProps extends HTMLAttributes<HTMLDivElement> {
@@ -57,7 +58,10 @@ export function CardHeader({
   ...props
 }: CardHeaderProps) {
   return (
-    <div className={cn('flex items-start justify-between', className)} {...props}>
+    <div
+      className={cn('flex items-start justify-between', className)}
+      {...props}
+    >
       <div>
         <h3 className="text-lg font-semibold text-earth-900 font-display">
           {title}
@@ -73,7 +77,11 @@ export function CardHeader({
 
 interface CardContentProps extends HTMLAttributes<HTMLDivElement> {}
 
-export function CardContent({ className, children, ...props }: CardContentProps) {
+export function CardContent({
+  className,
+  children,
+  ...props
+}: CardContentProps) {
   return (
     <div className={cn('mt-4', className)} {...props}>
       {children}

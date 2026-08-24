@@ -1,7 +1,9 @@
-import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from 'react'
+import { forwardRef } from 'react'
+import type { ButtonHTMLAttributes, ReactNode } from 'react'
 import { cn } from '@/lib/utils/cn'
 
-type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'outline' | 'google'
+type ButtonVariant =
+  'primary' | 'secondary' | 'ghost' | 'outline' | 'google' | 'danger'
 type ButtonSize = 'sm' | 'md' | 'lg'
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -47,6 +49,13 @@ const variantStyles: Record<ButtonVariant, string> = {
     hover:bg-earth-50 hover:border-earth-300
     active:bg-earth-100
     disabled:bg-earth-100 disabled:text-earth-400 disabled:border-earth-200
+    shadow-sm hover:shadow-md
+  `,
+  danger: `
+    bg-error-600 text-white
+    hover:bg-error-700
+    active:brightness-90
+    disabled:bg-earth-300 disabled:text-earth-500
     shadow-sm hover:shadow-md
   `,
 }

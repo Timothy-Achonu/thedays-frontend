@@ -13,19 +13,11 @@ export function TimezoneMismatchBanner({ user }: { user: User }) {
   const detectedTimezone = useMemo(detectBrowserTimezone, [])
   const [dismissed, setDismissed] = useState(() =>
     detectedTimezone
-      ? isTimezoneMismatchDismissed(
-          user.id,
-          user.timezone,
-          detectedTimezone,
-        )
+      ? isTimezoneMismatchDismissed(user.id, user.timezone, detectedTimezone)
       : true,
   )
 
-  if (
-    !detectedTimezone ||
-    detectedTimezone === user.timezone ||
-    dismissed
-  ) {
+  if (!detectedTimezone || detectedTimezone === user.timezone || dismissed) {
     return null
   }
 

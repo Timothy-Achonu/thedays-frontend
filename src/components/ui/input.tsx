@@ -1,13 +1,11 @@
-import {
-  forwardRef,
-  useState,
-  useId,
-  type InputHTMLAttributes,
-  type ReactNode,
-} from 'react'
+import { forwardRef, useId, useState } from 'react'
+import type { InputHTMLAttributes, ReactNode } from 'react'
 import { cn } from '@/lib/utils/cn'
 
-interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size'> {
+interface InputProps extends Omit<
+  InputHTMLAttributes<HTMLInputElement>,
+  'size'
+> {
   label: string
   error?: string
   hint?: string
@@ -96,9 +94,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             disabled={disabled}
             required={required}
             aria-invalid={hasError}
-            aria-describedby={
-              hasError ? errorId : hint ? hintId : undefined
-            }
+            aria-describedby={hasError ? errorId : hint ? hintId : undefined}
             className={cn(
               'w-full rounded-xl border bg-white font-body',
               'transition-all duration-200 ease-out',

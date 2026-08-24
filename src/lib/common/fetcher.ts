@@ -1,6 +1,6 @@
 import { isAxiosError } from 'axios'
-import {  axiosClient } from './axios-client'
-import type {AxiosFetcherConfig} from './axios-client';
+import { axiosClient } from './axios-client'
+import type { AxiosFetcherConfig } from './axios-client'
 import type { PaginatedResProps, PaginationMeta, ResProps } from './models'
 import {
   normalizeHeaders,

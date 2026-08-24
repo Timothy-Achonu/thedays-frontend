@@ -222,10 +222,7 @@ function VerifyEmailPage() {
           <>
             <p className="mb-5 text-sm text-earth-600">
               We sent a code to{' '}
-              <span className="font-medium text-earth-900">
-                {searchEmail}
-              </span>
-              .
+              <span className="font-medium text-earth-900">{searchEmail}</span>.
             </p>
 
             {resendNotice && (

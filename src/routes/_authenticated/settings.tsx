@@ -362,8 +362,7 @@ function ProfileSection({
             type="submit"
             isLoading={isUpdating}
             disabled={
-              username.trim().toLowerCase() === user.username ||
-              isUpdating
+              username.trim().toLowerCase() === user.username || isUpdating
             }
           >
             Save username

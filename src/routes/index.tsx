@@ -1,4 +1,4 @@
-import {Link, createFileRoute, } from '@tanstack/react-router'
+import { Link, createFileRoute } from '@tanstack/react-router'
 import { Button, Logo } from '@/components/ui'
 import { ROUTES } from '@/lib/constants/routes'
 import { cn } from '@/lib/utils/cn'
@@ -154,9 +154,7 @@ function LandingPage() {
             size="sm"
             className="[&_span]:text-earth-300 [&_svg_circle:first-child]:fill-earth-800"
           />
-          <p className="text-earth-500 text-sm">
-            Every day counts. No resets.
-          </p>
+          <p className="text-earth-500 text-sm">Every day counts. No resets.</p>
         </div>
       </footer>
     </div>
@@ -268,7 +266,7 @@ const valueProps = [
     icon: '🎯',
     title: 'Personal Landmarks',
     description:
-      'Set milestones at 10, 30, 100 days and plan how you\'ll celebrate. Watch your progress grow toward each goal.',
+      "Set milestones at 10, 30, 100 days and plan how you'll celebrate. Watch your progress grow toward each goal.",
   },
   {
     icon: '✨',
