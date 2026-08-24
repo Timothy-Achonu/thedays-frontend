@@ -25,7 +25,7 @@ export function TrackerCard({
   entry: TrackerWithDays
   index: number
 }) {
-  const { tracker, status } = entry
+  const { tracker, status, statusState } = entry
 
   return (
     <Link
@@ -79,7 +79,16 @@ export function TrackerCard({
       </p>
 
       <div className="mt-5 space-y-2 border-t border-dashed border-earth-200 pt-4">
-        {status
+        {statusState === 'loading' ? (
+          <div
+            className="h-7 animate-pulse-soft rounded-lg bg-earth-100"
+            aria-label="Daily status loading"
+          />
+        ) : statusState === 'failed' ? (
+          <p className="rounded-lg bg-error-50 px-2.5 py-1.5 text-xs font-semibold text-error-700 ring-1 ring-inset ring-error-200">
+            Daily status unavailable
+          </p>
+        ) : status
           ? status.lines.map((line) => (
               <p
                 key={line.label}

@@ -91,7 +91,7 @@ export function TodayCard({
           aria-checked={primaryCompleted}
           disabled={isBusy}
           onClick={() => toggle(primaryDay.date, primaryCompleted)}
-          aria-label={`Mark ${formatDateString(primaryDay.date, 'long')} as completed`}
+          aria-label={`${primaryCompleted ? 'Unmark' : 'Mark'} ${formatDateString(primaryDay.date, 'long')} as completed`}
           className={[
             'group inline-flex min-h-14 items-center justify-center gap-3 rounded-2xl px-6 py-3.5 text-lg font-semibold',
             'transition-all duration-200 ease-out focus-ring select-none',

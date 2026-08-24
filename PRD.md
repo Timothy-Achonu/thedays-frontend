@@ -1496,9 +1496,26 @@ Example response:
 
 ```json
 {
-  "completedDays": ["2026-08-12", "2026-08-13", "2026-08-15", "2026-08-16"]
+  "dates": ["2026-08-12", "2026-08-13", "2026-08-15", "2026-08-16"],
+  "total": 4
 }
 ```
+
+## Historical Backfill
+
+```http
+POST /api/trackers/:trackerId/completed-days/check-all
+```
+
+Marks every eligible date from the tracker start date through the latest eligible date. Practice includes today; Abstinence stops at yesterday. The range is capped at five years. Existing completions are retained, making the operation idempotent. The response is `{ "added": number, "total": number }`.
+
+## Clear Completion History
+
+```http
+DELETE /api/trackers/:trackerId/completed-days
+```
+
+Permanently removes every completed day and returns `{ "cleared": number, "total": 0 }`. The frontend must present this as a separate destructive action with confirmation.
 
 ---
 
@@ -1525,6 +1542,8 @@ Example body:
   "celebrationDescription": "Buy a new pair of running shoes."
 }
 ```
+
+Targets at or below the current completed-day count are valid historical milestones and are immediately reached. Target counts must be unique within a tracker. Conflicts return `409 DUPLICATE_LANDMARK_TARGET` with a `targetCount` field error.
 
 ## Update Landmark
 

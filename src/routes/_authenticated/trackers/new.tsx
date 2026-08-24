@@ -1,13 +1,10 @@
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useMemo } from 'react'
 import { ROUTES } from '@/lib/constants/routes'
 import { useCurrentUserQuery } from '@/lib/app/auth'
 import { useCreateTrackerMutation } from '@/lib/app/trackers'
 import { TrackerForm } from '@/features/trackers/components/tracker-form'
-import {
-  getCalendarDateInTimezone,
-  getDefaultTimezone,
-} from '@/lib/utils/timezone'
+import { getDefaultTimezone } from '@/lib/utils/timezone'
+import { useCalendarDate } from '@/hooks/use-calendar-date'
 
 export const Route = createFileRoute('/_authenticated/trackers/new')({
   component: NewTrackerPage,
@@ -18,10 +15,7 @@ function NewTrackerPage() {
   const { data: user } = useCurrentUserQuery()
   const createMutation = useCreateTrackerMutation()
 
-  const today = useMemo(
-    () => getCalendarDateInTimezone(user?.timezone ?? getDefaultTimezone()),
-    [user?.timezone],
-  )
+  const today = useCalendarDate(user?.timezone ?? getDefaultTimezone())
 
   return (
     <div className="relative min-h-[calc(100dvh-4.5rem)] overflow-hidden bg-earth-50 px-5 py-10 sm:px-8 lg:px-12 lg:py-14">

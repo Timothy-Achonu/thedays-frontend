@@ -1,5 +1,4 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { ROUTES } from '@/lib/constants/routes'
 import { useCurrentUserQuery } from '@/lib/app/auth'
@@ -8,10 +7,8 @@ import {
   useUpdateTrackerMutation,
 } from '@/lib/app/trackers'
 import { TrackerForm } from '@/features/trackers/components/tracker-form'
-import {
-  getCalendarDateInTimezone,
-  getDefaultTimezone,
-} from '@/lib/utils/timezone'
+import { getDefaultTimezone } from '@/lib/utils/timezone'
+import { useCalendarDate } from '@/hooks/use-calendar-date'
 
 export const Route = createFileRoute(
   '/_authenticated/trackers/$trackerId/edit',
@@ -26,10 +23,7 @@ function EditTrackerPage() {
   const trackerQuery = useQuery(trackerQueryOptions(trackerId))
   const updateMutation = useUpdateTrackerMutation()
 
-  const today = useMemo(
-    () => getCalendarDateInTimezone(user?.timezone ?? getDefaultTimezone()),
-    [user?.timezone],
-  )
+  const today = useCalendarDate(user?.timezone ?? getDefaultTimezone())
 
   const tracker = trackerQuery.data?.tracker
 
@@ -113,8 +107,8 @@ function EditTrackerPage() {
             submitLabel="Save changes"
             pendingLabel="Saving…"
             isPending={updateMutation.isPending}
-            onSubmit={(payload) =>
-              updateMutation.mutateAsync({
+            onSubmit={async (payload) => {
+              await updateMutation.mutateAsync({
                 trackerId: tracker.id,
                 input: {
                   title: payload.title,
@@ -122,7 +116,8 @@ function EditTrackerPage() {
                   startDate: payload.startDate,
                 },
               })
-            }
+              await navigate({ to: ROUTES.trackers.detail(tracker.id) })
+            }}
             onCancel={() =>
               navigate({ to: ROUTES.trackers.detail(tracker.id) })
             }

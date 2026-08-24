@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { useIsMutating } from '@tanstack/react-query'
 import type { Tracker } from '@/types/trackers'
 import { AppDialog, Button } from '@/components/ui'
@@ -9,8 +9,8 @@ import {
 } from '@/lib/app/trackers'
 import {
   addDaysToDate,
-  enumerateDays,
   formatDateString,
+  inclusiveDayCount,
 } from '@/lib/utils/dates'
 import { parseApiError } from '@/lib/utils'
 
@@ -37,24 +37,15 @@ export function BulkDayActions({
     mutationKey: COMPLETED_DAY_MUTATION_KEY,
   })
 
-  const eligibleDates = useMemo(() => {
-    const lastEligibleDate =
-      tracker.completionMode === 'practice' ? today : addDaysToDate(today, -1)
-
-    return enumerateDays(tracker.startDate, lastEligibleDate)
-  }, [today, tracker.completionMode, tracker.startDate])
-
-  const completedEligibleCount = eligibleDates.reduce(
-    (count, date) => count + Number(completedDates.has(date)),
-    0,
-  )
-  const uncheckedEligibleCount = eligibleDates.length - completedEligibleCount
+  const { lastEligibleBoundary, eligibleTotal, completedEligibleCount } =
+    getEligibleProgress(tracker, completedDates, today)
+  const uncheckedEligibleCount = eligibleTotal - completedEligibleCount
   const completedCount = completedDates.size
   const isCheckPending = checkAllMutation.isPending
   const isClearPending = clearAllMutation.isPending
   const isAnyCompletionPending = pendingCompletionMutations > 0
-  const firstEligibleDate = eligibleDates[0]
-  const lastEligibleDate = eligibleDates.at(-1)
+  const firstEligibleDate = eligibleTotal > 0 ? tracker.startDate : undefined
+  const lastEligibleDate = eligibleTotal > 0 ? lastEligibleBoundary : undefined
 
   const openAction = (nextAction: Exclude<BulkAction, null>) => {
     setDialogError(null)
@@ -77,8 +68,8 @@ export function BulkDayActions({
       onSuccess: ({ added, total }) => {
         setFeedback(
           added === 0
-            ? `All ${total.toLocaleString()} eligible days were already checked.`
-            : `${formatDayCount(added)} checked. ${formatDayCount(total)} completed in total.`,
+            ? `All ${total.toLocaleString()} eligible days are already checked. Review Day history and uncheck any missed days.`
+            : `${formatDayCount(added)} checked. ${formatDayCount(total)} completed in total. Review Day history and uncheck any missed days.`,
         )
         setAction(null)
       },
@@ -117,17 +108,17 @@ export function BulkDayActions({
                 className="size-2 rounded-full bg-sage-500 shadow-[0_0_0_4px_rgba(168,195,176,0.25)]"
               />
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-earth-500">
-                Full history controls
+                Historical backfill
               </p>
             </div>
             <p className="mt-2 font-display text-lg font-semibold text-earth-900">
-              {eligibleDates.length === 0
+              {eligibleTotal === 0
                 ? 'No finished days available yet'
-                : `${completedEligibleCount.toLocaleString()} of ${eligibleDates.length.toLocaleString()} eligible days checked`}
+                : `${completedEligibleCount.toLocaleString()} of ${eligibleTotal.toLocaleString()} eligible days completed`}
             </p>
             <p className="mt-1 max-w-lg text-sm leading-5 text-earth-500">
-              These actions include earlier dates that have not been loaded
-              below.
+              Save time when most days qualify: mark them all, then uncheck any
+              missed days below.
             </p>
           </div>
 
@@ -140,7 +131,7 @@ export function BulkDayActions({
               disabled={uncheckedEligibleCount === 0 || isAnyCompletionPending}
               onClick={() => openAction('check')}
             >
-              Check all
+              Mark all eligible dates
             </Button>
             <Button
               variant="ghost"
@@ -150,7 +141,7 @@ export function BulkDayActions({
               disabled={completedCount === 0 || isAnyCompletionPending}
               onClick={() => openAction('uncheck')}
             >
-              Uncheck all
+              Clear completion history
             </Button>
           </div>
         </div>
@@ -169,14 +160,14 @@ export function BulkDayActions({
       <AppDialog
         open={action === 'check'}
         onClose={closeDialog}
-        title={`Check ${formatDayCount(actionCount)}?`}
-        description="Every currently unchecked, eligible date in this tracker will be marked as completed."
+        title={`Mark ${formatDayCount(actionCount)} as completed?`}
+        description="This marks every currently unchecked eligible date as completed."
         size="sm"
       >
         {firstEligibleDate && lastEligibleDate ? (
           <div className="rounded-xl border border-sage-200 bg-sage-50 px-4 py-3">
             <p className="text-sm font-semibold text-sage-900">
-              Full tracker history
+              Historical backfill range
             </p>
             <p className="mt-1 text-sm text-sage-700">
               {formatDateString(firstEligibleDate, 'medium')} through{' '}
@@ -186,8 +177,9 @@ export function BulkDayActions({
         ) : null}
 
         <p className="mt-3 text-sm leading-6 text-earth-600">
-          Existing completed days stay checked. This may also mark one or more
-          landmarks as reached.
+          Afterward, review Day history and uncheck any days you missed. Your
+          completion total and landmark progress will update as you make
+          changes.
         </p>
 
         {tracker.completionMode === 'abstinence' ? (
@@ -222,8 +214,8 @@ export function BulkDayActions({
       <AppDialog
         open={action === 'uncheck'}
         onClose={closeDialog}
-        title={`Uncheck all ${formatDayCount(actionCount)}?`}
-        description="Every completed date in this tracker will be changed back to unchecked, including dates not currently loaded below."
+        title={`Clear all ${formatDayCount(actionCount)}?`}
+        description="Every completion in this tracker will be permanently removed, including dates not currently loaded below."
         size="sm"
       >
         <div className="rounded-xl border border-error-200 bg-error-50 px-4 py-3 text-sm leading-6 text-error-700">
@@ -258,6 +250,26 @@ export function BulkDayActions({
       </AppDialog>
     </>
   )
+}
+
+export function getEligibleProgress(
+  tracker: Pick<Tracker, 'completionMode' | 'startDate'>,
+  completedDates: ReadonlySet<string>,
+  today: string,
+) {
+  const lastEligibleBoundary =
+    tracker.completionMode === 'practice' ? today : addDaysToDate(today, -1)
+  const eligibleTotal = inclusiveDayCount(
+    tracker.startDate,
+    lastEligibleBoundary,
+  )
+  let completedEligibleCount = 0
+  completedDates.forEach((date) => {
+    if (date >= tracker.startDate && date <= lastEligibleBoundary) {
+      completedEligibleCount += 1
+    }
+  })
+  return { lastEligibleBoundary, eligibleTotal, completedEligibleCount }
 }
 
 function DialogError({ message }: { message: string | null }) {

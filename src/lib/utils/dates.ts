@@ -55,6 +55,29 @@ export function enumerateDays(
   return days
 }
 
+/** Inclusive calendar-day count in O(1), without allocating date strings. */
+export function inclusiveDayCount(startDate: string, endDate: string): number {
+  if (startDate > endDate) return 0
+  const [startYear, startMonth, startDay] = startDate.split('-').map(Number)
+  const [endYear, endMonth, endDay] = endDate.split('-').map(Number)
+  const start = Date.UTC(startYear, startMonth - 1, startDay)
+  const end = Date.UTC(endYear, endMonth - 1, endDay)
+  return Math.floor((end - start) / 86_400_000) + 1
+}
+
+/** Generates only the newest requested reverse-chronological window. */
+export function latestDayWindow(
+  startDate: string,
+  endDate: string,
+  limit: number,
+): Array<string> {
+  const total = inclusiveDayCount(startDate, endDate)
+  const size = Math.min(Math.max(limit, 0), total)
+  return Array.from({ length: size }, (_, index) =>
+    addDaysToDate(endDate, -index),
+  )
+}
+
 export function compareDateStrings(left: string, right: string): number {
   if (left < right) return -1
   if (left > right) return 1

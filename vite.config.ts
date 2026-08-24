@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { URL, fileURLToPath } from 'node:url'
 import { defineConfig, loadEnv } from 'vite'
 import { devtools } from '@tanstack/devtools-vite'
@@ -49,6 +50,11 @@ export default defineConfig(({ mode }) => {
   }
 
   return {
+    test: {
+      environment: 'jsdom',
+      setupFiles: './src/test/setup.ts',
+      globals: true,
+    },
     server: {
       host: true,
       port: DEV_SERVER_PORT,

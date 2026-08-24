@@ -282,7 +282,7 @@ function CompletionModeSelector({
         aria-label="Completion mode"
       >
         <CompletionModeOption
-          name="completion-mode-practice"
+          id="completion-mode-practice"
           title="Practice"
           description="For something you want to do. Today can be marked as soon as you finish."
           example="e.g. Days I Went Running"
@@ -293,7 +293,7 @@ function CompletionModeSelector({
           disabled={disabled}
         />
         <CompletionModeOption
-          name="completion-mode-abstinence"
+          id="completion-mode-abstinence"
           title="Abstinence"
           description="For something you avoid. A day unlocks only after it has ended."
           example="e.g. Days Without Soda"
@@ -315,7 +315,7 @@ function CompletionModeSelector({
 }
 
 function CompletionModeOption({
-  name,
+  id,
   title,
   description,
   example,
@@ -325,7 +325,7 @@ function CompletionModeOption({
   onSelect,
   disabled,
 }: {
-  name: string
+  id: string
   title: string
   description: string
   example: string
@@ -349,13 +349,14 @@ function CompletionModeOption({
       )}
     >
       <input
+        id={id}
         type="radio"
-        name={name}
+        name="completion-mode"
         checked={checked}
         onChange={onSelect}
         disabled={disabled}
         className="sr-only"
-        aria-describedby={`${name}-description`}
+        aria-describedby={`${id}-description`}
       />
       <span
         className={cn(
@@ -376,7 +377,7 @@ function CompletionModeOption({
           {title}
         </span>
         <span
-          id={`${name}-description`}
+          id={`${id}-description`}
           className="mt-1 block text-sm leading-6 text-earth-600"
         >
           {description}

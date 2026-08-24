@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import type { Landmark } from '@/types/trackers'
 import type { LandmarkFormPayload } from '@/features/landmarks/components/landmark-form-dialog'
@@ -24,10 +24,8 @@ import {
   DeleteLandmarkDialog,
   LandmarkFormDialog,
 } from '@/features/landmarks/components/landmark-form-dialog'
-import {
-  getCalendarDateInTimezone,
-  getDefaultTimezone,
-} from '@/lib/utils/timezone'
+import { getDefaultTimezone } from '@/lib/utils/timezone'
+import { useCalendarDate } from '@/hooks/use-calendar-date'
 
 export const Route = createFileRoute('/_authenticated/trackers/$trackerId/')({
   component: TrackerDetailPage,
@@ -37,10 +35,7 @@ function TrackerDetailPage() {
   const { trackerId } = Route.useParams()
   const { data: user } = useCurrentUserQuery()
 
-  const today = useMemo(
-    () => getCalendarDateInTimezone(user?.timezone ?? getDefaultTimezone()),
-    [user?.timezone],
-  )
+  const today = useCalendarDate(user?.timezone ?? getDefaultTimezone())
 
   const trackerQuery = useQuery(trackerQueryOptions(trackerId))
   const daysQuery = useQuery(completedDaysQueryOptions(trackerId))
@@ -84,6 +79,7 @@ function TrackerDetailPage() {
     )
   }
 
+  const hasCompletionData = Boolean(daysQuery.data)
   const completedDates = new Set(daysQuery.data?.dates ?? [])
   const landmarks = landmarksQuery.data?.landmarks ?? []
 
@@ -128,12 +124,19 @@ function TrackerDetailPage() {
           }}
         />
 
-        <TodayCard
-          tracker={tracker}
-          completedDates={completedDates}
-          today={today}
-          onError={setDayError}
-        />
+        {!hasCompletionData && daysQuery.isPending ? (
+          <div className="h-36 animate-pulse-soft rounded-3xl border border-earth-100 bg-white/70" aria-label="Completion controls loading" />
+        ) : !hasCompletionData && daysQuery.isError ? (
+          <CompletionLoadError onRetry={() => void daysQuery.refetch()} />
+        ) : (
+          <TodayCard tracker={tracker} completedDates={completedDates} today={today} onError={setDayError} />
+        )}
+
+        {hasCompletionData && daysQuery.isError ? (
+          <p role="status" className="rounded-xl border border-sand-300 bg-sand-100 px-4 py-3 text-sm text-sand-900">
+            Completion history could not be refreshed. Showing the last loaded data.
+          </p>
+        ) : null}
 
         {dayError ? (
           <p
@@ -211,7 +214,7 @@ function TrackerDetailPage() {
             Day history
           </h2>
 
-          {daysQuery.isLoading ? (
+          {!hasCompletionData && daysQuery.isPending ? (
             <div className="animate-pulse-soft space-y-2" aria-hidden="true">
               <div className="mb-4 h-28 rounded-2xl border border-earth-100 bg-white/70" />
               {Array.from({ length: 5 }, (_, index) => (
@@ -221,24 +224,7 @@ function TrackerDetailPage() {
                 />
               ))}
             </div>
-          ) : daysQuery.isError ? (
-            <div className="rounded-2xl border border-error-200 bg-error-50 px-5 py-6 text-center">
-              <p className="font-medium text-error-700">
-                Day history could not be loaded.
-              </p>
-              <p className="mt-1 text-sm text-error-600">
-                Reload the history before changing individual or bulk day
-                states.
-              </p>
-              <button
-                type="button"
-                onClick={() => void daysQuery.refetch()}
-                className="mt-4 rounded-xl border border-error-300 bg-white px-4 py-2 text-sm font-semibold text-error-700 transition-colors hover:bg-error-100 focus-ring"
-              >
-                Try again
-              </button>
-            </div>
-          ) : (
+          ) : hasCompletionData ? (
             <>
               <BulkDayActions
                 tracker={tracker}
@@ -252,7 +238,7 @@ function TrackerDetailPage() {
                 onError={setDayError}
               />
             </>
-          )}
+          ) : null}
         </section>
       </div>
 
@@ -281,6 +267,7 @@ function TrackerDetailPage() {
         isPending={
           createLandmarkMutation.isPending || updateLandmarkMutation.isPending
         }
+        currentCount={tracker.daysCount}
         onSubmit={(payload) =>
           submitLandmark(payload).catch(() => {
             // Field-level errors are rendered inside the dialog; keep it open.
@@ -309,6 +296,16 @@ function TrackerDetailPage() {
         onCancel={() => setLandmarkToDelete(null)}
       />
     </div>
+  )
+}
+
+function CompletionLoadError({ onRetry }: { onRetry: () => void }) {
+  return (
+    <section aria-disabled="true" className="rounded-3xl border border-error-200 bg-error-50 p-7 text-center">
+      <p className="font-display text-xl font-semibold text-earth-900">Completion controls are unavailable.</p>
+      <p className="mt-2 text-sm text-error-700">Load the authoritative completion history before changing any day.</p>
+      <button type="button" onClick={onRetry} className="mt-4 rounded-xl border border-error-300 bg-white px-4 py-2 text-sm font-semibold text-error-700 focus-ring">Try again</button>
+    </section>
   )
 }
 

@@ -19,6 +19,7 @@ interface LandmarkFormDialogProps {
   /** When set the dialog edits this landmark; otherwise it creates a new one. */
   landmark?: Landmark | null
   isPending: boolean
+  currentCount: number
   onSubmit: (payload: LandmarkFormPayload) => Promise<unknown>
   onClose: () => void
 }
@@ -27,6 +28,7 @@ export function LandmarkFormDialog({
   open,
   landmark,
   isPending,
+  currentCount,
   onSubmit,
   onClose,
 }: LandmarkFormDialogProps) {
@@ -118,6 +120,12 @@ export function LandmarkFormDialog({
           maxLength={TITLE_MAX + 1}
           disabled={isPending}
         />
+
+        {Number.isInteger(Number(targetCount)) && Number(targetCount) <= currentCount ? (
+          <p role="status" className="rounded-xl border border-sand-300 bg-sand-100 px-4 py-3 text-sm leading-5 text-sand-900">
+            This is a historical milestone and will be recorded as already reached.
+          </p>
+        ) : null}
 
         <Input
           label="Target"

@@ -8,6 +8,7 @@ export interface TrackerWithDays {
   tracker: Tracker
   completedDates: ReadonlySet<string>
   status: TrackerDailyStatus | null
+  statusState: 'loading' | 'ready' | 'failed'
 }
 
 /**
@@ -26,9 +27,24 @@ export function useTrackersWithDays(today: string | undefined) {
   const trackersWithDays: Array<TrackerWithDays> = trackers.map(
     (tracker, index) => {
       const daysData = dayQueries[index]?.data
+      const query = dayQueries[index]
+
+      if (query.isError) {
+        return {
+          tracker,
+          completedDates: new Set(daysData?.dates ?? []),
+          status: null,
+          statusState: 'failed',
+        }
+      }
 
       if (!daysData || !today) {
-        return { tracker, completedDates: new Set<string>(), status: null }
+        return {
+          tracker,
+          completedDates: new Set<string>(),
+          status: null,
+          statusState: 'loading',
+        }
       }
 
       const completedDates = new Set(daysData.dates)
@@ -36,6 +52,7 @@ export function useTrackersWithDays(today: string | undefined) {
         tracker,
         completedDates,
         status: getTrackerDailyStatus(tracker, completedDates, today),
+        statusState: 'ready',
       }
     },
   )
@@ -46,7 +63,17 @@ export function useTrackersWithDays(today: string | undefined) {
   return {
     trackers: trackersWithDays,
     isLoading: trackersQuery.isLoading,
+    isInitialError: trackersQuery.isError && !trackersQuery.data,
+    isBackgroundError: trackersQuery.isError && Boolean(trackersQuery.data),
     isDaysLoading: areDaysLoading,
     error: trackersQuery.error,
+    retryTrackers: trackersQuery.refetch,
+    hasFailedStatuses: dayQueries.some((query) => query.isError),
+    retryFailedStatuses: () =>
+      Promise.all(
+        dayQueries
+          .filter((query) => query.isError)
+          .map((query) => query.refetch()),
+      ),
   }
 }

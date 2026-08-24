@@ -1,15 +1,12 @@
 import { Link, createFileRoute } from '@tanstack/react-router'
-import { useMemo } from 'react'
 import { ROUTES } from '@/lib/constants/routes'
 import { TimezoneMismatchBanner } from '@/components/timezone-mismatch-banner'
 import { useCurrentUserQuery } from '@/lib/app/auth'
 import { TrackerCard } from '@/features/trackers/components/tracker-card'
 import { TrackersGridSkeleton } from '@/features/trackers/components/tracker-skeletons'
 import { useTrackersWithDays } from '@/features/trackers/hooks/use-trackers-with-days'
-import {
-  getCalendarDateInTimezone,
-  getDefaultTimezone,
-} from '@/lib/utils/timezone'
+import { getDefaultTimezone } from '@/lib/utils/timezone'
+import { useCalendarDate } from '@/hooks/use-calendar-date'
 import { cn } from '@/lib/utils/cn'
 
 export const Route = createFileRoute('/_authenticated/dashboard')({
@@ -24,11 +21,16 @@ const primaryLinkClasses = cn(
 
 function DashboardPage() {
   const { data: user } = useCurrentUserQuery()
-  const today = useMemo(
-    () => getCalendarDateInTimezone(user?.timezone ?? getDefaultTimezone()),
-    [user?.timezone],
-  )
-  const { trackers, isLoading } = useTrackersWithDays(today)
+  const today = useCalendarDate(user?.timezone ?? getDefaultTimezone())
+  const {
+    trackers,
+    isLoading,
+    isInitialError,
+    isBackgroundError,
+    retryTrackers,
+    hasFailedStatuses,
+    retryFailedStatuses,
+  } = useTrackersWithDays(today)
 
   const totalCount = trackers.reduce(
     (sum, entry) => sum + entry.tracker.daysCount,
@@ -88,8 +90,22 @@ function DashboardPage() {
         ) : null}
 
         <main className="mt-10">
+          {isBackgroundError ? (
+            <WarningBanner
+              message="Tracker updates could not be refreshed. Showing the last saved view."
+              onRetry={() => void retryTrackers()}
+            />
+          ) : null}
+          {hasFailedStatuses ? (
+            <WarningBanner
+              message="Daily status is unavailable for one or more trackers."
+              onRetry={() => void retryFailedStatuses()}
+            />
+          ) : null}
           {isLoading ? (
             <TrackersGridSkeleton count={6} />
+          ) : isInitialError ? (
+            <BlockingError onRetry={() => void retryTrackers()} />
           ) : hasTrackers ? (
             <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
               {trackers.map((entry, index) => (
@@ -105,6 +121,35 @@ function DashboardPage() {
           )}
         </main>
       </div>
+    </div>
+  )
+}
+
+function WarningBanner({
+  message,
+  onRetry,
+}: {
+  message: string
+  onRetry: () => void
+}) {
+  return (
+    <div role="status" className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-sand-300 bg-sand-100 px-4 py-3 text-sm text-sand-900">
+      <span>{message}</span>
+      <button type="button" onClick={onRetry} className="font-semibold underline underline-offset-4 focus-ring">
+        Retry
+      </button>
+    </div>
+  )
+}
+
+function BlockingError({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div className="rounded-3xl border border-error-200 bg-error-50 p-10 text-center">
+      <h2 className="font-display text-2xl font-semibold text-earth-900">Trackers could not be loaded.</h2>
+      <p className="mt-2 text-earth-600">Your data has not been replaced with an empty list.</p>
+      <button type="button" onClick={onRetry} className="mt-5 rounded-xl bg-earth-900 px-4 py-2.5 font-semibold text-white focus-ring">
+        Try again
+      </button>
     </div>
   )
 }
