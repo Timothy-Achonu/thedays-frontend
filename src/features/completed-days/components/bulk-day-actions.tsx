@@ -163,6 +163,26 @@ export function BulkDayActions({
         title={`Mark ${formatDayCount(actionCount)} as completed?`}
         description="This marks every currently unchecked eligible date as completed."
         size="sm"
+        footer={
+          <div className="flex flex-wrap justify-end gap-3">
+            <Button
+              variant="ghost"
+              onClick={closeDialog}
+              disabled={isCheckPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={confirmCheckAll}
+              isLoading={isCheckPending}
+            >
+              {isCheckPending
+                ? 'Checking days…'
+                : `Check ${formatDayCount(actionCount)}`}
+            </Button>
+          </div>
+        }
       >
         {firstEligibleDate && lastEligibleDate ? (
           <div className="rounded-xl border border-sage-200 bg-sage-50 px-4 py-3">
@@ -190,25 +210,6 @@ export function BulkDayActions({
         ) : null}
 
         <DialogError message={dialogError} />
-
-        <div className="mt-6 flex flex-wrap justify-end gap-3 border-t border-earth-100 pt-4">
-          <Button
-            variant="ghost"
-            onClick={closeDialog}
-            disabled={isCheckPending}
-          >
-            Cancel
-          </Button>
-          <Button
-            variant="secondary"
-            onClick={confirmCheckAll}
-            isLoading={isCheckPending}
-          >
-            {isCheckPending
-              ? 'Checking days…'
-              : `Check ${formatDayCount(actionCount)}`}
-          </Button>
-        </div>
       </AppDialog>
 
       <AppDialog
@@ -217,6 +218,26 @@ export function BulkDayActions({
         title={`Clear all ${formatDayCount(actionCount)}?`}
         description="Every completion in this tracker will be permanently removed, including dates not currently loaded below."
         size="sm"
+        footer={
+          <div className="flex flex-wrap justify-end gap-3">
+            <Button
+              variant="ghost"
+              onClick={closeDialog}
+              disabled={isClearPending}
+            >
+              Keep checked
+            </Button>
+            <Button
+              variant="danger"
+              onClick={confirmClearAll}
+              isLoading={isClearPending}
+            >
+              {isClearPending
+                ? 'Unchecking days…'
+                : `Uncheck ${formatDayCount(actionCount)}`}
+            </Button>
+          </div>
+        }
       >
         <div className="rounded-xl border border-error-200 bg-error-50 px-4 py-3 text-sm leading-6 text-error-700">
           Your tracker and landmarks will remain, but completion totals and
@@ -228,25 +249,6 @@ export function BulkDayActions({
         </p>
 
         <DialogError message={dialogError} />
-
-        <div className="mt-6 flex flex-wrap justify-end gap-3 border-t border-earth-100 pt-4">
-          <Button
-            variant="ghost"
-            onClick={closeDialog}
-            disabled={isClearPending}
-          >
-            Keep checked
-          </Button>
-          <Button
-            variant="danger"
-            onClick={confirmClearAll}
-            isLoading={isClearPending}
-          >
-            {isClearPending
-              ? 'Unchecking days…'
-              : `Uncheck ${formatDayCount(actionCount)}`}
-          </Button>
-        </div>
       </AppDialog>
     </>
   )

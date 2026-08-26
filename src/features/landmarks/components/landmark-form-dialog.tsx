@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 import type { FormEvent } from 'react'
 import type { Landmark } from '@/types/trackers'
 import { AppDialog, Button, Input, Textarea } from '@/components/ui'
@@ -33,6 +33,7 @@ export function LandmarkFormDialog({
   onClose,
 }: LandmarkFormDialogProps) {
   const isEditing = Boolean(landmark)
+  const formId = useId()
   const [title, setTitle] = useState('')
   const [targetCount, setTargetCount] = useState('')
   const [celebrationDescription, setCelebrationDescription] = useState('')
@@ -108,8 +109,28 @@ export function LandmarkFormDialog({
           : 'Add a landmark'
       }
       description="A landmark is a target worth reaching — and a promise of how you will celebrate."
+      footer={
+        <div className="flex flex-wrap justify-end gap-3">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={onClose}
+            disabled={isPending}
+          >
+            Cancel
+          </Button>
+          <Button type="submit" form={formId} isLoading={isPending}>
+            {isEditing ? 'Save landmark' : 'Add landmark'}
+          </Button>
+        </div>
+      }
     >
-      <form onSubmit={handleSubmit} noValidate className="space-y-4">
+      <form
+        id={formId}
+        onSubmit={handleSubmit}
+        noValidate
+        className="space-y-4"
+      >
         <Input
           label="Title"
           value={title}
@@ -121,9 +142,14 @@ export function LandmarkFormDialog({
           disabled={isPending}
         />
 
-        {Number.isInteger(Number(targetCount)) && Number(targetCount) <= currentCount ? (
-          <p role="status" className="rounded-xl border border-sand-300 bg-sand-100 px-4 py-3 text-sm leading-5 text-sand-900">
-            This is a historical milestone and will be recorded as already reached.
+        {Number.isInteger(Number(targetCount)) &&
+        Number(targetCount) <= currentCount ? (
+          <p
+            role="status"
+            className="rounded-xl border border-sand-300 bg-sand-100 px-4 py-3 text-sm leading-5 text-sand-900"
+          >
+            This is a historical milestone and will be recorded as already
+            reached.
           </p>
         ) : null}
 
@@ -160,20 +186,6 @@ export function LandmarkFormDialog({
             {formError}
           </p>
         ) : null}
-
-        <div className="flex flex-wrap justify-end gap-3 border-t border-earth-100 pt-4">
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={onClose}
-            disabled={isPending}
-          >
-            Cancel
-          </Button>
-          <Button type="submit" isLoading={isPending}>
-            {isEditing ? 'Save landmark' : 'Add landmark'}
-          </Button>
-        </div>
       </form>
     </AppDialog>
   )
@@ -203,20 +215,22 @@ export function DeleteLandmarkDialog({
       } landmark?`}
       description="Your completed days are not affected — only this landmark and its celebration note will be removed."
       size="sm"
+      footer={
+        <div className="flex flex-wrap justify-end gap-3">
+          <Button variant="ghost" onClick={onCancel} disabled={isPending}>
+            Keep it
+          </Button>
+          <Button variant="danger" onClick={onConfirm} isLoading={isPending}>
+            {isPending ? 'Deleting…' : 'Delete landmark'}
+          </Button>
+        </div>
+      }
     >
       {error ? (
-        <p role="alert" className="mb-3 text-sm text-error-600">
+        <p role="alert" className="text-sm text-error-600">
           {error}
         </p>
       ) : null}
-      <div className="flex flex-wrap justify-end gap-3">
-        <Button variant="ghost" onClick={onCancel} disabled={isPending}>
-          Keep it
-        </Button>
-        <Button variant="danger" onClick={onConfirm} isLoading={isPending}>
-          {isPending ? 'Deleting…' : 'Delete landmark'}
-        </Button>
-      </div>
     </AppDialog>
   )
 }
