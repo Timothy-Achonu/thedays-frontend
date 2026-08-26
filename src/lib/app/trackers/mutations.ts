@@ -22,6 +22,7 @@ import type {
   CompletedDaysResponse,
   CreateLandmarkInput,
   CreateTrackerInput,
+  LandmarksResponse,
   MarkCompletedDayInput,
   Tracker,
   UnmarkCompletedDayInput,
@@ -29,6 +30,8 @@ import type {
   UpdateTrackerInput,
 } from '@/types/trackers'
 import { insertDateSorted, removeDate } from '@/lib/utils/dates'
+import { fireCornerConfetti } from '@/lib/utils/fire-corner-confetti'
+import { getNewlyReachedLandmarks } from '@/features/landmarks/newly-reached'
 import { ROUTES } from '@/lib/constants/routes'
 
 type OptimisticContext = {
@@ -50,6 +53,25 @@ async function refreshCompletionDependentQueries(
     queryKey: TRACKERS_QUERY_KEY,
     exact: true,
   })
+}
+
+function celebrateIfLandmarksReached(
+  queryClient: ReturnType<typeof useQueryClient>,
+  trackerId: string,
+  previousCount: number,
+  nextCount: number,
+): void {
+  const cached = queryClient.getQueryData<LandmarksResponse>(
+    landmarksQueryKey(trackerId),
+  )
+  if (!cached) return
+  if (
+    getNewlyReachedLandmarks(cached.landmarks, previousCount, nextCount)
+      .length === 0
+  ) {
+    return
+  }
+  fireCornerConfetti()
 }
 
 export function useCreateTrackerMutation() {
@@ -148,6 +170,16 @@ export function useMarkCompletedDayMutation() {
         )
       }
     },
+    onSuccess: (_data, input, context) => {
+      const previous = context.previousCompletedDays
+      if (!previous || previous.dates.includes(input.date)) return
+      celebrateIfLandmarksReached(
+        queryClient,
+        input.trackerId,
+        previous.total,
+        previous.total + 1,
+      )
+    },
     onSettled: () => {
       // Active tracker queries (detail page, landmarks, completed-days)
       // refetch immediately via invalidation...
@@ -214,8 +246,19 @@ export function useCheckAllCompletedDaysMutation() {
   return useMutation({
     mutationKey: [...BULK_COMPLETED_DAY_MUTATION_KEY, 'check'],
     mutationFn: checkAllCompletedDays,
-    onSuccess: (_response, trackerId) =>
-      refreshCompletionDependentQueries(queryClient, trackerId),
+    onSuccess: (response, trackerId) => {
+      const previous = queryClient.getQueryData<CompletedDaysResponse>(
+        completedDaysQueryKey(trackerId),
+      )
+      const previousCount = previous?.total ?? response.total - response.added
+      celebrateIfLandmarksReached(
+        queryClient,
+        trackerId,
+        previousCount,
+        response.total,
+      )
+      return refreshCompletionDependentQueries(queryClient, trackerId)
+    },
   })
 }
 
