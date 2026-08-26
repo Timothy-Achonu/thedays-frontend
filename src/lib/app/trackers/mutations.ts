@@ -32,6 +32,7 @@ import type {
 import { insertDateSorted, removeDate } from '@/lib/utils/dates'
 import { fireCornerConfetti } from '@/lib/utils/fire-corner-confetti'
 import { getNewlyReachedLandmarks } from '@/features/landmarks/newly-reached'
+import { toastLandmarkReached } from '@/features/landmarks/landmark-reached-toast'
 import { ROUTES } from '@/lib/constants/routes'
 
 type OptimisticContext = {
@@ -65,13 +66,14 @@ function celebrateIfLandmarksReached(
     landmarksQueryKey(trackerId),
   )
   if (!cached) return
-  if (
-    getNewlyReachedLandmarks(cached.landmarks, previousCount, nextCount)
-      .length === 0
-  ) {
-    return
-  }
+  const newlyReached = getNewlyReachedLandmarks(
+    cached.landmarks,
+    previousCount,
+    nextCount,
+  )
+  if (newlyReached.length === 0) return
   fireCornerConfetti()
+  toastLandmarkReached(newlyReached)
 }
 
 export function useCreateTrackerMutation() {

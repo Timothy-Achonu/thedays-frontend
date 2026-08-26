@@ -4,6 +4,7 @@ import { RouterProvider, createRouter } from '@tanstack/react-router'
 
 import * as TanStackQueryProvider from './integrations/tanstack-query/root-provider.tsx'
 import { routeTree } from './routeTree.gen.ts'
+import { ToastViewport } from '@/components/ui/toast-viewport'
 
 import './styles.css'
 
@@ -67,6 +68,7 @@ if (rootElement && !rootElement.innerHTML) {
   root.render(
     <StrictMode>
       <TanStackQueryProvider.Provider {...TanStackQueryProviderContext}>
+        <ToastViewport />
         <RouterProvider router={router} />
       </TanStackQueryProvider.Provider>
     </StrictMode>,
