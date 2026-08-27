@@ -42,6 +42,17 @@ describe('AppShell responsive account menu', () => {
     logoutMutation.isError = false
   })
 
+  it('uses destination-based navigation for dashboard, trackers, and settings', () => {
+    renderAppShell()
+
+    expect(screen.getAllByRole('link', { name: 'Dashboard' })).toHaveLength(2)
+    expect(screen.getAllByRole('link', { name: 'Trackers' })).toHaveLength(2)
+    expect(screen.getAllByRole('link', { name: 'Settings' })).toHaveLength(2)
+    expect(
+      screen.queryByRole('link', { name: 'New Tracker' }),
+    ).not.toBeInTheDocument()
+  })
+
   it('opens from the profile avatar and logs out directly', async () => {
     const browserUser = userEvent.setup()
     renderAppShell()

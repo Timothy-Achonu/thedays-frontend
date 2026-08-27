@@ -5,7 +5,6 @@ import type { User } from '@/lib/common/models'
 import { useLogoutMutation } from '@/lib/app/auth'
 import { ROUTES } from '@/lib/constants/routes'
 import { Logo } from '@/components/ui'
-import { cn } from '@/lib/utils/cn'
 
 type AppShellProps = {
   user: User
@@ -19,8 +18,8 @@ type NavigationItem = {
 }
 
 const navigationItems: Array<NavigationItem> = [
-  { label: 'Home', to: ROUTES.dashboard, icon: HomeIcon },
-  { label: 'New Tracker', to: ROUTES.trackers.new, icon: PlusIcon },
+  { label: 'Dashboard', to: ROUTES.dashboard, icon: HomeIcon },
+  { label: 'Trackers', to: ROUTES.trackers.index, icon: TrackersIcon },
   { label: 'Settings', to: ROUTES.settings, icon: SettingsIcon },
 ]
 
@@ -164,7 +163,7 @@ function DesktopNavigationLink({ item }: { item: NavigationItem }) {
   return (
     <Link
       to={item.to}
-      activeOptions={{ exact: item.to !== ROUTES.dashboard }}
+      activeOptions={{ exact: item.to !== ROUTES.trackers.index }}
       className="group flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-earth-400 transition-colors hover:bg-earth-900 hover:text-earth-100 focus-ring"
       activeProps={{ className: 'bg-earth-800 text-earth-50 shadow-inner' }}
     >
@@ -181,7 +180,7 @@ function TabletNavigationLink({ item }: { item: NavigationItem }) {
       to={item.to}
       aria-label={item.label}
       title={item.label}
-      activeOptions={{ exact: item.to !== ROUTES.dashboard }}
+      activeOptions={{ exact: item.to !== ROUTES.trackers.index }}
       className="grid size-11 place-items-center rounded-xl text-earth-500 transition-colors hover:bg-earth-900 hover:text-earth-100 focus-ring"
       activeProps={{ className: 'bg-earth-800 text-terracotta-300' }}
     >
@@ -192,21 +191,15 @@ function TabletNavigationLink({ item }: { item: NavigationItem }) {
 
 function MobileNavigationLink({ item }: { item: NavigationItem }) {
   const Icon = item.icon
-  const isCreate = item.to === ROUTES.trackers.new
   return (
     <Link
       to={item.to}
-      activeOptions={{ exact: item.to !== ROUTES.dashboard }}
-      className={cn(
-        'flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-xl text-[0.68rem] font-semibold transition-colors focus-ring',
-        isCreate
-          ? 'text-terracotta-600 hover:bg-terracotta-50'
-          : 'text-earth-500 hover:bg-earth-100 hover:text-earth-800',
-      )}
+      activeOptions={{ exact: item.to !== ROUTES.trackers.index }}
+      className="flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-xl text-[0.68rem] font-semibold text-earth-500 transition-colors hover:bg-earth-100 hover:text-earth-800 focus-ring"
       activeProps={{ className: 'bg-earth-100 text-earth-900' }}
     >
-      <Icon className={cn('size-5', isCreate && 'size-6')} />
-      <span>{isCreate ? 'New Tracker' : item.label}</span>
+      <Icon className="size-5" />
+      <span>{item.label}</span>
     </Link>
   )
 }
@@ -268,8 +261,10 @@ function HomeIcon({ className }: { className?: string }) {
   )
 }
 
-function PlusIcon({ className }: { className?: string }) {
-  return <IconBase className={className} path="M12 5v14M5 12h14" />
+function TrackersIcon({ className }: { className?: string }) {
+  return (
+    <IconBase className={className} path="M5 5.5h14v5H5v-5Zm0 8h14v5H5v-5Z" />
+  )
 }
 
 function SettingsIcon({ className }: { className?: string }) {

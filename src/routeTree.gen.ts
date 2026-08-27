@@ -18,6 +18,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as VerifyEmailRouteImport } from './routes/verify-email'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedTrackersIndexRouteImport } from './routes/_authenticated/trackers/index'
 import { Route as AuthenticatedTrackersNewRouteImport } from './routes/_authenticated/trackers/new'
 import { Route as AuthenticatedTrackersTrackerIdIndexRouteImport } from './routes/_authenticated/trackers/$trackerId/index'
 import { Route as AuthenticatedTrackersTrackerIdEditRouteImport } from './routes/_authenticated/trackers/$trackerId/edit'
@@ -66,6 +67,12 @@ const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedTrackersIndexRoute =
+  AuthenticatedTrackersIndexRouteImport.update({
+    id: '/trackers/',
+    path: '/trackers/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedTrackersNewRoute =
   AuthenticatedTrackersNewRouteImport.update({
     id: '/trackers/new',
@@ -95,6 +102,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/trackers/new': typeof AuthenticatedTrackersNewRoute
+  '/trackers/': typeof AuthenticatedTrackersIndexRoute
   '/trackers/$trackerId/edit': typeof AuthenticatedTrackersTrackerIdEditRoute
   '/trackers/$trackerId/': typeof AuthenticatedTrackersTrackerIdIndexRoute
 }
@@ -108,6 +116,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/trackers/new': typeof AuthenticatedTrackersNewRoute
+  '/trackers': typeof AuthenticatedTrackersIndexRoute
   '/trackers/$trackerId/edit': typeof AuthenticatedTrackersTrackerIdEditRoute
   '/trackers/$trackerId': typeof AuthenticatedTrackersTrackerIdIndexRoute
 }
@@ -123,6 +132,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/trackers/new': typeof AuthenticatedTrackersNewRoute
+  '/_authenticated/trackers/': typeof AuthenticatedTrackersIndexRoute
   '/_authenticated/trackers/$trackerId/edit': typeof AuthenticatedTrackersTrackerIdEditRoute
   '/_authenticated/trackers/$trackerId/': typeof AuthenticatedTrackersTrackerIdIndexRoute
 }
@@ -138,6 +148,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/settings'
     | '/trackers/new'
+    | '/trackers/'
     | '/trackers/$trackerId/edit'
     | '/trackers/$trackerId/'
   fileRoutesByTo: FileRoutesByTo
@@ -151,6 +162,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/settings'
     | '/trackers/new'
+    | '/trackers'
     | '/trackers/$trackerId/edit'
     | '/trackers/$trackerId'
   id:
@@ -165,6 +177,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/settings'
     | '/_authenticated/trackers/new'
+    | '/_authenticated/trackers/'
     | '/_authenticated/trackers/$trackerId/edit'
     | '/_authenticated/trackers/$trackerId/'
   fileRoutesById: FileRoutesById
@@ -244,6 +257,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/trackers/': {
+      id: '/_authenticated/trackers/'
+      path: '/trackers'
+      fullPath: '/trackers/'
+      preLoaderRoute: typeof AuthenticatedTrackersIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/trackers/new': {
       id: '/_authenticated/trackers/new'
       path: '/trackers/new'
@@ -272,6 +292,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedTrackersNewRoute: typeof AuthenticatedTrackersNewRoute
+  AuthenticatedTrackersIndexRoute: typeof AuthenticatedTrackersIndexRoute
   AuthenticatedTrackersTrackerIdEditRoute: typeof AuthenticatedTrackersTrackerIdEditRoute
   AuthenticatedTrackersTrackerIdIndexRoute: typeof AuthenticatedTrackersTrackerIdIndexRoute
 }
@@ -280,6 +301,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedTrackersNewRoute: AuthenticatedTrackersNewRoute,
+  AuthenticatedTrackersIndexRoute: AuthenticatedTrackersIndexRoute,
   AuthenticatedTrackersTrackerIdEditRoute:
     AuthenticatedTrackersTrackerIdEditRoute,
   AuthenticatedTrackersTrackerIdIndexRoute:

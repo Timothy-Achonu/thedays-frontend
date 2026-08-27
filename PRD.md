@@ -110,6 +110,7 @@ Suggested application routes include:
  /forgot-password
  /reset-password
  /dashboard
+ /trackers
  /trackers/new
  /trackers/:trackerId
  /trackers/:trackerId/edit
@@ -884,9 +885,15 @@ Suggested route:
 /dashboard
 ```
 
-The dashboard should display all TheDayss owned by the user.
+The dashboard should greet the authenticated user with `Hi {username}` and summarize progress instead of listing every tracker. It should display the number of trackers, total completed days across all owned trackers, the highest tracker by completed-day count, and the closest unreached landmark across all trackers.
 
-Each tracker card should include:
+Total completed days means the sum of completion records, not elapsed calendar days. A tracker with zero completed days is not presented as the highest tracker. Ties should identify one stable result and state how many other items share its rank.
+
+The closest landmark is the unreached landmark with the fewest completed days remaining. Reached landmarks are historical and must not be selected.
+
+Tracker cards belong on the dedicated `/trackers` page.
+
+Each tracker card on `/trackers` should include:
 
 - Tracker title.
 - Completion mode.
@@ -1417,6 +1424,14 @@ that later link Google, cannot use this one-time username choice. Current-user r
 
 # 42. Tracker API
 
+## Get Dashboard Summary
+
+```http
+GET /api/dashboard
+```
+
+The authenticated response contains `stats.trackerCount`, `stats.totalCompletedDays`, a nullable `stats.highestTracker`, and a nullable `stats.closestLandmark`. Ranked results contain `tiedWithCount`, which is the number of additional equally ranked items. The closest landmark also contains its tracker identity, target, current count, and remaining count.
+
 ## Get User Trackers
 
 ```http
@@ -1818,7 +1833,7 @@ Next Landmark:
 
 ## No Trackers
 
-The dashboard should display an empty state when the user has no TheDayss.
+The `/trackers` page should display an empty state when the user has no TheDayss. The dashboard should still display zero-valued statistics and creation actions.
 
 Example:
 
@@ -1962,7 +1977,7 @@ Trackers may initially be sorted by either:
 - Most recently created.
 - Most recently updated.
 
-The final choice should remain consistent across the dashboard.
+The final choice should remain consistent across the `/trackers` page.
 
 ## Day History
 
@@ -2054,19 +2069,22 @@ The MVP should include:
 2. Registration page.
 3. Login page.
 4. Dashboard.
-5. Create TheDays interface.
-6. Tracker detail page.
-7. Edit tracker interface.
-8. Add landmark interface.
-9. Edit landmark interface.
-10. Account/settings page.
-11. Delete confirmation dialogs.
+5. Tracker list page.
+6. Create TheDays interface.
+7. Tracker detail page.
+8. Edit tracker interface.
+9. Add landmark interface.
+10. Edit landmark interface.
+11. Account/settings page.
+12. Delete confirmation dialogs.
 
 ---
 
-# 63. Dashboard Requirements
+# 63. Dashboard and Tracker List Requirements
 
-Each TheDays card should display at minimum:
+The dashboard must display `Hi {username}`, the four aggregate statistics defined in section 28, and actions to view or create trackers. Loading, request failure, zero progress, no trackers, and no upcoming landmark must be visually distinct states.
+
+The `/trackers` page owns the rich TheDays card list. Each card should display at minimum:
 
 ```text
 Title
@@ -2121,6 +2139,7 @@ Unauthenticated users must not be able to access protected routes such as:
 
 ```text
 /dashboard
+/trackers
 /trackers/:trackerId
 /settings
 ```

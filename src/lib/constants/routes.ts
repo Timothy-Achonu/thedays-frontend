@@ -8,6 +8,7 @@ export const ROUTES = {
   dashboard: '/dashboard',
   settings: '/settings',
   trackers: {
+    index: '/trackers',
     new: '/trackers/new',
     detail: (trackerId: string) => `/trackers/${trackerId}`,
     edit: (trackerId: string) => `/trackers/${trackerId}/edit`,

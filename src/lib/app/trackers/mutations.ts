@@ -29,6 +29,7 @@ import type {
   UpdateLandmarkInput,
   UpdateTrackerInput,
 } from '@/types/trackers'
+import { DASHBOARD_QUERY_KEY } from '@/lib/app/dashboard'
 import { insertDateSorted, removeDate } from '@/lib/utils/dates'
 import { fireCornerConfetti } from '@/lib/utils/fire-corner-confetti'
 import { getNewlyReachedLandmarks } from '@/features/landmarks/newly-reached'
@@ -37,6 +38,12 @@ import { ROUTES } from '@/lib/constants/routes'
 
 type OptimisticContext = {
   previousCompletedDays?: CompletedDaysResponse
+}
+
+function invalidateDashboardSummary(
+  queryClient: ReturnType<typeof useQueryClient>,
+): void {
+  void queryClient.invalidateQueries({ queryKey: DASHBOARD_QUERY_KEY })
 }
 
 export const COMPLETED_DAY_MUTATION_KEY = ['completed-day-mutations'] as const
@@ -49,6 +56,7 @@ async function refreshCompletionDependentQueries(
   queryClient: ReturnType<typeof useQueryClient>,
   trackerId: string,
 ): Promise<void> {
+  invalidateDashboardSummary(queryClient)
   await queryClient.invalidateQueries({ queryKey: trackerQueryKey(trackerId) })
   await queryClient.refetchQueries({
     queryKey: TRACKERS_QUERY_KEY,
@@ -94,6 +102,7 @@ export function useCreateTrackerMutation() {
         total: 0,
       })
       queryClient.invalidateQueries({ queryKey: TRACKERS_QUERY_KEY })
+      invalidateDashboardSummary(queryClient)
       navigate({ to: ROUTES.trackers.detail(tracker.id) })
     },
   })
@@ -116,6 +125,7 @@ export function useUpdateTrackerMutation() {
     onSuccess: (tracker) => {
       queryClient.setQueryData(trackerQueryKey(tracker.id), { tracker })
       queryClient.invalidateQueries({ queryKey: TRACKERS_QUERY_KEY })
+      invalidateDashboardSummary(queryClient)
     },
   })
 }
@@ -131,6 +141,7 @@ export function useDeleteTrackerMutation() {
     onSuccess: (_data, trackerId) => {
       queryClient.removeQueries({ queryKey: trackerQueryKey(trackerId) })
       queryClient.invalidateQueries({ queryKey: TRACKERS_QUERY_KEY })
+      invalidateDashboardSummary(queryClient)
       navigate({ to: ROUTES.dashboard })
     },
   })
@@ -193,6 +204,7 @@ export function useMarkCompletedDayMutation() {
         queryKey: TRACKERS_QUERY_KEY,
         exact: true,
       })
+      invalidateDashboardSummary(queryClient)
     },
   })
 }
@@ -238,6 +250,7 @@ export function useUnmarkCompletedDayMutation() {
         queryKey: TRACKERS_QUERY_KEY,
         exact: true,
       })
+      invalidateDashboardSummary(queryClient)
     },
   })
 }
@@ -293,6 +306,7 @@ export function useCreateLandmarkMutation() {
       void queryClient.invalidateQueries({
         queryKey: landmarksQueryKey(variables.trackerId),
       })
+      invalidateDashboardSummary(queryClient)
     },
   })
 }
@@ -317,6 +331,7 @@ export function useUpdateLandmarkMutation() {
       void queryClient.invalidateQueries({
         queryKey: landmarksQueryKey(variables.trackerId),
       })
+      invalidateDashboardSummary(queryClient)
     },
   })
 }
@@ -338,6 +353,7 @@ export function useDeleteLandmarkMutation() {
       void queryClient.invalidateQueries({
         queryKey: landmarksQueryKey(variables.trackerId),
       })
+      invalidateDashboardSummary(queryClient)
     },
   })
 }
