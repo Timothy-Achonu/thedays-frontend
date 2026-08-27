@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, createFileRoute } from '@tanstack/react-router'
+import { Link, createFileRoute, useNavigate } from '@tanstack/react-router'
 import type { FormEvent } from 'react'
 import { AuthLayout } from '@/layouts'
 import {
@@ -11,7 +11,7 @@ import {
 } from '@/components/ui'
 import { GoogleSignIn } from '@/components/auth/google-sign-in'
 import { ROUTES } from '@/lib/constants/routes'
-import { useRegisterMutation } from '@/lib/app/auth'
+import { useRegisterMutation, verifyEmailPath } from '@/lib/app/auth'
 import { requireGuest } from '@/lib/auth/guards'
 import { getAuthErrorMessage, getFieldError, parseApiError } from '@/lib/utils'
 import { cn } from '@/lib/utils/cn'
@@ -30,10 +30,12 @@ function RegisterPage() {
   const [formError, setFormError] = useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [shakeForm, setShakeForm] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const registerMutation = useRegisterMutation()
+  const navigate = useNavigate()
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setFormError(null)
     setFieldErrors({})
@@ -75,46 +77,54 @@ function RegisterPage() {
       return
     }
 
-    registerMutation.mutate(
-      { username: trimmedUsername, email: trimmedEmail, password, timezone },
-      {
-        onError: (error) => {
-          const parsed = parseApiError(error)
+    setIsSubmitting(true)
 
-          if (parsed.code === 'EMAIL_DELIVERY_FAILED') {
-            return
-          }
+    try {
+      const result = await registerMutation.mutateAsync({
+        username: trimmedUsername,
+        email: trimmedEmail,
+        password,
+        timezone,
+      })
+      await navigate(verifyEmailPath(result.email))
+    } catch (error) {
+      const parsed = parseApiError(error)
 
-          if (parsed.code === 'VALIDATION_ERROR') {
-            setFieldErrors({
-              username: getFieldError(parsed, 'username') || '',
-              email: getFieldError(parsed, 'email') || '',
-              password: getFieldError(parsed, 'password') || '',
-              timezone: getFieldError(parsed, 'timezone') || '',
-            })
-          } else if (
-            parsed.code === 'USERNAME_TAKEN' ||
-            parsed.code === 'EMAIL_ALREADY_REGISTERED'
-          ) {
-            if (parsed.code === 'USERNAME_TAKEN') {
-              setFieldErrors((prev) => ({
-                ...prev,
-                username: 'This username is already taken',
-              }))
-            } else {
-              setFieldErrors((prev) => ({
-                ...prev,
-                email: 'An account with this email already exists',
-              }))
-            }
-          } else {
-            setFormError(getAuthErrorMessage(parsed.code))
-          }
+      if (parsed.code === 'EMAIL_DELIVERY_FAILED') {
+        await navigate(verifyEmailPath(trimmedEmail, true))
+        return
+      }
 
-          triggerShake()
-        },
-      },
-    )
+      setIsSubmitting(false)
+
+      if (parsed.code === 'VALIDATION_ERROR') {
+        setFieldErrors({
+          username: getFieldError(parsed, 'username') || '',
+          email: getFieldError(parsed, 'email') || '',
+          password: getFieldError(parsed, 'password') || '',
+          timezone: getFieldError(parsed, 'timezone') || '',
+        })
+      } else if (
+        parsed.code === 'USERNAME_TAKEN' ||
+        parsed.code === 'EMAIL_ALREADY_REGISTERED'
+      ) {
+        if (parsed.code === 'USERNAME_TAKEN') {
+          setFieldErrors((prev) => ({
+            ...prev,
+            username: 'This username is already taken',
+          }))
+        } else {
+          setFieldErrors((prev) => ({
+            ...prev,
+            email: 'An account with this email already exists',
+          }))
+        }
+      } else {
+        setFormError(getAuthErrorMessage(parsed.code))
+      }
+
+      triggerShake()
+    }
   }
 
   const triggerShake = () => {
@@ -122,7 +132,7 @@ function RegisterPage() {
     setTimeout(() => setShakeForm(false), 500)
   }
 
-  const isLoading = registerMutation.isPending
+  const isLoading = isSubmitting
 
   return (
     <AuthLayout

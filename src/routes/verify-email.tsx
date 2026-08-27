@@ -59,6 +59,7 @@ function VerifyEmailPage() {
   const [resendNotice, setResendNotice] = useState<string | null>(null)
   const [secondsLeft, setSecondsLeft] = useState(0)
   const [shakeForm, setShakeForm] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const verifyMutation = useVerifyEmailMutation()
   const resendMutation = useResendVerificationMutation()
@@ -102,7 +103,7 @@ function VerifyEmailPage() {
     })
   }
 
-  const handleVerify = (event: FormEvent) => {
+  const handleVerify = async (event: FormEvent) => {
     event.preventDefault()
     if (!searchEmail) {
       return
@@ -118,20 +119,21 @@ function VerifyEmailPage() {
       return
     }
 
-    verifyMutation.mutate(
-      { email: searchEmail, code },
-      {
-        onError: (error) => {
-          const parsed = parseApiError(error)
-          if (parsed.code === 'INVALID_OR_EXPIRED_CODE') {
-            setCodeError(getAuthErrorMessage(parsed.code))
-          } else {
-            setFormError(getAuthErrorMessage(parsed.code))
-          }
-          triggerShake()
-        },
-      },
-    )
+    setIsSubmitting(true)
+
+    try {
+      await verifyMutation.mutateAsync({ email: searchEmail, code })
+      await navigate({ to: ROUTES.dashboard })
+    } catch (error) {
+      setIsSubmitting(false)
+      const parsed = parseApiError(error)
+      if (parsed.code === 'INVALID_OR_EXPIRED_CODE') {
+        setCodeError(getAuthErrorMessage(parsed.code))
+      } else {
+        setFormError(getAuthErrorMessage(parsed.code))
+      }
+      triggerShake()
+    }
   }
 
   const handleResend = () => {
@@ -162,11 +164,12 @@ function VerifyEmailPage() {
     )
   }
 
-  const isVerifying = verifyMutation.isPending
+  const isVerifying = isSubmitting
 
   return (
     <AuthLayout
       title="Check your email"
+      redirectAuthenticated={false}
       subtitle={
         deliveryFailed
           ? 'Resend your verification code to continue'

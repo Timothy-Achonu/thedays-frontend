@@ -17,7 +17,6 @@ import type {
 import type { User } from '@/lib/common/models'
 import { axiosClient } from '@/lib/common/axios-client'
 import { getBaseUrl } from '@/lib/common/getBaseUrl'
-import { parseApiError } from '@/lib/utils'
 import { ROUTES } from '@/lib/constants/routes'
 import { isUnauthorizedError } from '@/lib/auth/guards'
 import {
@@ -29,7 +28,7 @@ import {
   getDefaultTimezone,
 } from '@/lib/utils/timezone'
 
-function verifyEmailPath(email: string, deliveryFailed = false) {
+export function verifyEmailPath(email: string, deliveryFailed = false) {
   return {
     to: '/verify-email' as const,
     search: deliveryFailed
@@ -40,7 +39,6 @@ function verifyEmailPath(email: string, deliveryFailed = false) {
 
 export function useLoginMutation() {
   const queryClient = useQueryClient()
-  const navigate = useNavigate()
 
   return useMutation({
     onMutate: () =>
@@ -56,14 +54,12 @@ export function useLoginMutation() {
     onSuccess: (user) => {
       markSessionAuthenticated()
       queryClient.setQueryData(AUTH_USER_QUERY_KEY, user)
-      navigate({ to: ROUTES.dashboard })
     },
   })
 }
 
 export function useGoogleLoginMutation() {
   const queryClient = useQueryClient()
-  const navigate = useNavigate()
 
   return useMutation({
     onMutate: () =>
@@ -83,18 +79,12 @@ export function useGoogleLoginMutation() {
         dismissTimezoneMismatch(user.id, user.timezone)
       }
       queryClient.setQueryData(AUTH_USER_QUERY_KEY, user)
-      navigate({ to: ROUTES.dashboard })
     },
   })
 }
 
 export function useRegisterMutation() {
-  const queryClient = useQueryClient()
-  const navigate = useNavigate()
-
   return useMutation({
-    onMutate: () =>
-      queryClient.cancelQueries({ queryKey: AUTH_USER_QUERY_KEY }),
     mutationFn: async (data: RegisterInput): Promise<RegisterResponse> => {
       const response = await axiosClient.post<RegisterResponse>(
         `${getBaseUrl()}/auth/register`,
@@ -103,20 +93,11 @@ export function useRegisterMutation() {
       )
       return response.data
     },
-    onSuccess: (result) => {
-      navigate(verifyEmailPath(result.email))
-    },
-    onError: (error, variables) => {
-      if (parseApiError(error).code === 'EMAIL_DELIVERY_FAILED') {
-        navigate(verifyEmailPath(variables.email, true))
-      }
-    },
   })
 }
 
 export function useVerifyEmailMutation() {
   const queryClient = useQueryClient()
-  const navigate = useNavigate()
 
   return useMutation({
     onMutate: () =>
@@ -133,7 +114,6 @@ export function useVerifyEmailMutation() {
       markSessionAuthenticated()
       dismissTimezoneMismatch(user.id, user.timezone)
       queryClient.setQueryData(AUTH_USER_QUERY_KEY, user)
-      navigate({ to: ROUTES.dashboard })
     },
   })
 }

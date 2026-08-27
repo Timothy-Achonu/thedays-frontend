@@ -5,7 +5,7 @@ import { AuthLayout } from '@/layouts'
 import { Button, Card, Input, PasswordInput } from '@/components/ui'
 import { GoogleSignIn } from '@/components/auth/google-sign-in'
 import { ROUTES } from '@/lib/constants/routes'
-import { useLoginMutation } from '@/lib/app/auth'
+import { useLoginMutation, verifyEmailPath } from '@/lib/app/auth'
 import { requireGuest } from '@/lib/auth/guards'
 import { getAuthErrorMessage, getFieldError, parseApiError } from '@/lib/utils'
 import { cn } from '@/lib/utils/cn'
@@ -21,11 +21,12 @@ function LoginPage() {
   const [formError, setFormError] = useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [shakeForm, setShakeForm] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const loginMutation = useLoginMutation()
   const navigate = useNavigate()
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setFormError(null)
     setFieldErrors({})
@@ -40,33 +41,35 @@ function LoginPage() {
       return
     }
 
-    loginMutation.mutate(
-      { email: email.trim().toLowerCase(), password },
-      {
-        onError: (error) => {
-          const parsed = parseApiError(error)
+    setIsSubmitting(true)
 
-          if (parsed.code === 'EMAIL_NOT_VERIFIED') {
-            void navigate({
-              to: '/verify-email',
-              search: { email: email.trim().toLowerCase() },
-            })
-            return
-          }
+    try {
+      await loginMutation.mutateAsync({
+        email: email.trim().toLowerCase(),
+        password,
+      })
+      await navigate({ to: ROUTES.dashboard })
+    } catch (error) {
+      const parsed = parseApiError(error)
 
-          if (parsed.code === 'VALIDATION_ERROR') {
-            setFieldErrors({
-              email: getFieldError(parsed, 'email') || '',
-              password: getFieldError(parsed, 'password') || '',
-            })
-          } else {
-            setFormError(getAuthErrorMessage(parsed.code))
-          }
+      if (parsed.code === 'EMAIL_NOT_VERIFIED') {
+        await navigate(verifyEmailPath(email.trim().toLowerCase()))
+        return
+      }
 
-          triggerShake()
-        },
-      },
-    )
+      setIsSubmitting(false)
+
+      if (parsed.code === 'VALIDATION_ERROR') {
+        setFieldErrors({
+          email: getFieldError(parsed, 'email') || '',
+          password: getFieldError(parsed, 'password') || '',
+        })
+      } else {
+        setFormError(getAuthErrorMessage(parsed.code))
+      }
+
+      triggerShake()
+    }
   }
 
   const triggerShake = () => {
@@ -74,7 +77,7 @@ function LoginPage() {
     setTimeout(() => setShakeForm(false), 500)
   }
 
-  const isLoading = loginMutation.isPending
+  const isLoading = isSubmitting
 
   return (
     <AuthLayout
