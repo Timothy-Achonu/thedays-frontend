@@ -25,6 +25,7 @@ import {
   LandmarkFormDialog,
 } from '@/features/landmarks/components/landmark-form-dialog'
 import { getDefaultTimezone } from '@/lib/utils/timezone'
+import { getFieldError, getFormError, parseApiError } from '@/lib/utils'
 import { useCalendarDate } from '@/hooks/use-calendar-date'
 
 export const Route = createFileRoute('/_authenticated/trackers/$trackerId/')({
@@ -106,6 +107,27 @@ function TrackerDetailPage() {
         celebrationDescription: payload.celebrationDescription,
       },
     })
+  }
+
+  const setLandmarkCelebrated = (landmark: Landmark, celebrated: boolean) => {
+    setLandmarkError(null)
+    updateLandmarkMutation.mutate(
+      {
+        trackerId: tracker.id,
+        landmarkId: landmark.id,
+        input: { celebrated },
+      },
+      {
+        onError: (error) => {
+          const parsed = parseApiError(error)
+          setLandmarkError(
+            getFieldError(parsed, 'celebrated') ??
+              getFormError(parsed) ??
+              'The celebration could not be updated. Please try again.',
+          )
+        },
+      },
+    )
   }
 
   return (
@@ -193,9 +215,15 @@ function TrackerDetailPage() {
                     setLandmarkFormState({ edit: landmark })
                   }}
                   onDelete={() => setLandmarkToDelete(landmark)}
+                  onCelebrate={() => setLandmarkCelebrated(landmark, true)}
+                  onUndoCelebrate={() => setLandmarkCelebrated(landmark, false)}
                   isBusy={
-                    updateLandmarkMutation.isPending ||
-                    deleteLandmarkMutation.isPending
+                    (updateLandmarkMutation.isPending &&
+                      updateLandmarkMutation.variables.landmarkId ===
+                        landmark.id) ||
+                    (deleteLandmarkMutation.isPending &&
+                      deleteLandmarkMutation.variables.landmarkId ===
+                        landmark.id)
                   }
                 />
               ))}

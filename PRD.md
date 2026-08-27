@@ -1007,6 +1007,7 @@ trackerId
 title
 targetCount
 celebrationDescription
+celebratedAt
 createdAt
 updatedAt
 ```
@@ -1020,6 +1021,7 @@ Example:
   title: "The Big 50",
   targetCount: 50,
   celebrationDescription: "Buy a new pair of running shoes.",
+  celebratedAt: null,
   createdAt: "...",
   updatedAt: "..."
 }
@@ -1082,6 +1084,10 @@ Reached landmarks should remain visible as part of the user's tracker history.
 
 They should not be deleted or hidden automatically.
 
+Reached is not the same as celebrating. `reached` is computed from the completed-day count. A user may mark a reached landmark's celebration as executed. That action is stored as `celebratedAt` (an instant, not a calendar date) and returned as `celebrated: true` plus `celebratedAt`. Unreached landmarks cannot be marked celebrated (`400 LANDMARK_NOT_REACHED`). The user may undo a celebration (`celebrated: false`). If a landmark later becomes unreached — because completed days were unmarked or cleared, or because `targetCount` was raised above the current count — `celebratedAt` is cleared automatically.
+
+Dashboard closest-landmark and next-landmark selection continue to use `reached` only. Celebrated state does not change which landmark is next.
+
 ---
 
 # 34. Multiple Landmarks
@@ -1109,6 +1115,8 @@ Users should be able to:
 - Add landmarks.
 - Edit landmarks.
 - Delete landmarks.
+- Mark a reached landmark's celebration as executed.
+- Undo a celebration.
 - View upcoming landmarks.
 - View reached landmarks.
 
@@ -1255,16 +1263,17 @@ model CompletedDay {
 }
 
 model Landmark {
-  id                     String   @id @default(cuid())
+  id                     String    @id @default(cuid())
   title                  String?
   targetCount            Int
   celebrationDescription String
+  celebratedAt           DateTime?
 
   trackerId              String
-  tracker                Tracker  @relation(fields: [trackerId], references: [id], onDelete: Cascade)
+  tracker                Tracker   @relation(fields: [trackerId], references: [id], onDelete: Cascade)
 
-  createdAt              DateTime @default(now())
-  updatedAt              DateTime @updatedAt
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
 
   @@index([trackerId])
 }
@@ -1565,6 +1574,18 @@ Targets at or below the current completed-day count are valid historical milesto
 ```http
 PATCH /api/trackers/:trackerId/landmarks/:landmarkId
 ```
+
+Example body to record that the celebration was executed:
+
+```json
+{
+  "celebrated": true
+}
+```
+
+`celebrated` may be sent alone or with other landmark fields. Other fields are applied first, then `reached` is recomputed, then `celebrated` is applied. `celebrated: true` on an unreached landmark returns `400 LANDMARK_NOT_REACHED` with a `celebrated` field error. Repeating `celebrated: true` is idempotent and keeps the original `celebratedAt`. `celebrated: false` clears it.
+
+Landmark JSON includes computed `reached`, `currentCount`, `remaining`, derived `celebrated`, and `celebratedAt`.
 
 ## Delete Landmark
 
@@ -2520,6 +2541,10 @@ Complete:
 - [ ] The next upcoming landmark is visible.
 - [ ] Progress toward a landmark is visible.
 - [ ] Reached landmarks remain visible.
+- [ ] A user can mark a reached landmark's celebration as executed.
+- [ ] A user can undo a celebration.
+- [ ] An unreached landmark cannot be marked celebrated.
+- [ ] A celebration is cleared if the landmark becomes unreached.
 
 ---
 

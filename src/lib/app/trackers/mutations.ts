@@ -311,6 +311,10 @@ export function useCreateLandmarkMutation() {
   })
 }
 
+type LandmarkUpdateContext = {
+  previousLandmarks?: LandmarksResponse
+}
+
 export function useUpdateLandmarkMutation() {
   const queryClient = useQueryClient()
 
@@ -327,11 +331,57 @@ export function useUpdateLandmarkMutation() {
       const response = await updateLandmark(trackerId, landmarkId, input)
       return response.landmark
     },
-    onSuccess: (_landmark, variables) => {
+    onMutate: async (variables): Promise<LandmarkUpdateContext> => {
+      if (variables.input.celebrated === undefined) return {}
+
+      const queryKey = landmarksQueryKey(variables.trackerId)
+      await queryClient.cancelQueries({ queryKey })
+      const previous = queryClient.getQueryData<LandmarksResponse>(queryKey)
+
+      if (previous) {
+        const celebrated = variables.input.celebrated
+        queryClient.setQueryData<LandmarksResponse>(queryKey, {
+          landmarks: previous.landmarks.map((landmark) => {
+            if (landmark.id !== variables.landmarkId) return landmark
+            return {
+              ...landmark,
+              celebrated,
+              celebratedAt: celebrated
+                ? (landmark.celebratedAt ?? new Date().toISOString())
+                : null,
+            }
+          }),
+        })
+      }
+
+      return { previousLandmarks: previous }
+    },
+    onError: (_error, variables, context) => {
+      if (context?.previousLandmarks) {
+        queryClient.setQueryData(
+          landmarksQueryKey(variables.trackerId),
+          context.previousLandmarks,
+        )
+      }
+    },
+    onSuccess: (landmark, variables) => {
+      queryClient.setQueryData<LandmarksResponse>(
+        landmarksQueryKey(variables.trackerId),
+        (current) => {
+          if (!current) return current
+          return {
+            landmarks: current.landmarks.map((item) =>
+              item.id === landmark.id ? landmark : item,
+            ),
+          }
+        },
+      )
+      invalidateDashboardSummary(queryClient)
+    },
+    onSettled: (_data, _error, variables) => {
       void queryClient.invalidateQueries({
         queryKey: landmarksQueryKey(variables.trackerId),
       })
-      invalidateDashboardSummary(queryClient)
     },
   })
 }

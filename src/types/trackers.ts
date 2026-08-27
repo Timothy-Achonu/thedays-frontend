@@ -80,6 +80,8 @@ export interface Landmark {
   currentCount: number
   remaining: number
   reached: boolean
+  celebrated: boolean
+  celebratedAt: string | null
   createdAt: string
   updatedAt: string
 }
@@ -94,6 +96,7 @@ export interface UpdateLandmarkInput {
   title?: string | null
   targetCount?: number
   celebrationDescription?: string
+  celebrated?: boolean
 }
 
 export interface LandmarkResponse {
@@ -116,5 +119,6 @@ export type TrackerErrorCode =
   | 'BACKFILL_RANGE_TOO_LARGE'
   | 'DUPLICATE_COMPLETION'
   | 'DUPLICATE_LANDMARK_TARGET'
+  | 'LANDMARK_NOT_REACHED'
   | 'RATE_LIMIT_EXCEEDED'
   | 'INTERNAL_SERVER_ERROR'

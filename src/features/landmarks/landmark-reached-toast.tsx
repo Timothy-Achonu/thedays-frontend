@@ -1,9 +1,15 @@
-import type { Landmark } from '@/types/trackers'
+import { useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
+import type { Landmark, LandmarksResponse } from '@/types/trackers'
+import { Button } from '@/components/ui'
+import { landmarksQueryKey } from '@/lib/app/trackers/queries'
+import { updateLandmark } from '@/lib/app/trackers/services'
+import { getFieldError, getFormError, parseApiError } from '@/lib/utils'
 import * as notify from '@/lib/utils/notify'
 
 export type LandmarkReachedCopyInput = Pick<
   Landmark,
-  'title' | 'targetCount' | 'celebrationDescription'
+  'id' | 'trackerId' | 'title' | 'targetCount' | 'celebrationDescription'
 >
 
 export interface LandmarkReachedCopy {
@@ -16,7 +22,12 @@ export interface LandmarkReachedCopy {
  * day count (and optional title); several are collapsed into a single card.
  */
 export function formatLandmarkReachedToast(
-  landmarks: ReadonlyArray<LandmarkReachedCopyInput>,
+  landmarks: ReadonlyArray<
+    Pick<
+      LandmarkReachedCopyInput,
+      'title' | 'targetCount' | 'celebrationDescription'
+    >
+  >,
 ): LandmarkReachedCopy {
   if (landmarks.length === 0) {
     return { title: '', subtitle: '' }
@@ -52,6 +63,8 @@ export function toastLandmarkReached(
 
   notify.success({
     content: <LandmarkReachedToast landmarks={landmarks} />,
+    autoClose: 12_000,
+    closeOnClick: false,
   })
 }
 
@@ -89,6 +102,7 @@ export function LandmarkReachedToast({
               {single.celebrationDescription}
             </p>
           </blockquote>
+          <CelebrateToastButton landmark={single} className="mt-3" />
         </>
       ) : (
         <>
@@ -98,7 +112,7 @@ export function LandmarkReachedToast({
           <ul className="mt-2.5 space-y-2">
             {landmarks.map((landmark) => (
               <li
-                key={`${landmark.targetCount}-${landmark.title ?? landmark.celebrationDescription}`}
+                key={landmark.id}
                 className="border-l-2 border-terracotta-300 pl-3"
               >
                 <p className="font-display text-sm font-semibold text-earth-800 tabular-nums">
@@ -108,11 +122,101 @@ export function LandmarkReachedToast({
                 <p className="text-sm italic leading-5 text-earth-600">
                   {landmark.celebrationDescription}
                 </p>
+                <CelebrateToastButton landmark={landmark} className="mt-2" />
               </li>
             ))}
           </ul>
         </>
       )}
+    </div>
+  )
+}
+
+function CelebrateToastButton({
+  landmark,
+  className,
+}: {
+  landmark: LandmarkReachedCopyInput
+  className?: string
+}) {
+  const queryClient = useQueryClient()
+  const [isPending, setIsPending] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [done, setDone] = useState(false)
+  const daysLabel = `${landmark.targetCount.toLocaleString()}-day`
+
+  if (done) {
+    return (
+      <p className={`text-xs font-semibold uppercase tracking-wider text-sage-700 ${className ?? ''}`}>
+        Celebrated
+      </p>
+    )
+  }
+
+  return (
+    <div className={className}>
+      <Button
+        type="button"
+        size="sm"
+        variant="primary"
+        isLoading={isPending}
+        disabled={isPending}
+        aria-label={`Mark the ${daysLabel} celebration as done`}
+        onClick={(event) => {
+          event.stopPropagation()
+          setError(null)
+          setIsPending(true)
+
+          const queryKey = landmarksQueryKey(landmark.trackerId)
+          const previous = queryClient.getQueryData<LandmarksResponse>(queryKey)
+          if (previous) {
+            queryClient.setQueryData<LandmarksResponse>(queryKey, {
+              landmarks: previous.landmarks.map((item) =>
+                item.id === landmark.id
+                  ? {
+                      ...item,
+                      celebrated: true,
+                      celebratedAt: item.celebratedAt ?? new Date().toISOString(),
+                    }
+                  : item,
+              ),
+            })
+          }
+
+          void updateLandmark(landmark.trackerId, landmark.id, { celebrated: true })
+            .then((response) => {
+              queryClient.setQueryData<LandmarksResponse>(queryKey, (current) => {
+                if (!current) return current
+                return {
+                  landmarks: current.landmarks.map((item) =>
+                    item.id === response.landmark.id ? response.landmark : item,
+                  ),
+                }
+              })
+              setDone(true)
+            })
+            .catch((submitError: unknown) => {
+              if (previous) queryClient.setQueryData(queryKey, previous)
+              const parsed = parseApiError(submitError)
+              setError(
+                getFieldError(parsed, 'celebrated') ??
+                  getFormError(parsed) ??
+                  'The celebration could not be saved.',
+              )
+            })
+            .finally(() => {
+              setIsPending(false)
+              void queryClient.invalidateQueries({ queryKey })
+            })
+        }}
+      >
+        I celebrated this
+      </Button>
+      {error ? (
+        <p role="alert" className="mt-1.5 text-xs text-error-600">
+          {error}
+        </p>
+      ) : null}
     </div>
   )
 }
