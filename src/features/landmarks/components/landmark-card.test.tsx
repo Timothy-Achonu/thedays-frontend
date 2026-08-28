@@ -34,6 +34,9 @@ describe('LandmarkCard', () => {
 
     expect(screen.getByText('30 days remaining')).toBeInTheDocument()
     expect(
+      screen.getByText('Buy a new pair of running shoes.'),
+    ).toBeInTheDocument()
+    expect(
       screen.queryByRole('button', { name: /mark the .* celebration as done/i }),
     ).not.toBeInTheDocument()
   })
@@ -52,10 +55,13 @@ describe('LandmarkCard', () => {
 
     expect(screen.getByText(/reached — celebrate/i)).toBeInTheDocument()
     expect(
+      screen.getByText('Buy a new pair of running shoes.'),
+    ).toBeInTheDocument()
+    expect(
       screen.getByRole('button', {
         name: 'Mark the 50-day celebration as done',
       }),
-    ).toBeEnabled()
+    ).toHaveTextContent('Mark as celebrated')
   })
 
   it('shows a settled celebrated state with undo', () => {

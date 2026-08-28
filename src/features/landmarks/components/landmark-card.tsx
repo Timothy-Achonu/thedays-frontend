@@ -1,5 +1,4 @@
 import type { Landmark } from '@/types/trackers'
-import { Button } from '@/components/ui'
 import { cn } from '@/lib/utils/cn'
 
 interface LandmarkCardProps {
@@ -100,24 +99,23 @@ export function LandmarkCard({
 
       <blockquote className="relative mt-4 border-l-2 border-terracotta-300 pl-3">
         <span className="sr-only">Celebration plan: </span>
-        <p className="text-sm italic leading-6 text-earth-600" lang="zxx">
-          {landmark.celebrationDescription}
+        <p className="text-sm italic leading-6 text-earth-600">
+          <span aria-hidden="true">🎉 </span>
+          <span lang="zxx">{landmark.celebrationDescription}</span>
         </p>
       </blockquote>
 
       {pendingCelebration ? (
         <div className="relative mt-4">
-          <Button
+          <button
             type="button"
-            size="sm"
-            variant="primary"
-            disabled={isBusy}
             onClick={onCelebrate}
+            disabled={isBusy}
             aria-label={`Mark the ${daysLabel} celebration as done`}
-            fullWidth
+            className="text-xs font-semibold text-terracotta-600 underline-offset-2 transition-colors hover:text-terracotta-800 hover:underline focus-ring rounded-md px-0.5 disabled:cursor-wait"
           >
-            I celebrated this
-          </Button>
+            Mark as celebrated
+          </button>
         </div>
       ) : null}
 
