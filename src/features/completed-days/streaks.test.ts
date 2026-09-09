@@ -118,20 +118,22 @@ describe('isPerfectClosedMonth', () => {
     ).toBe(true)
   })
 
-  it('supports a tracker that starts mid-month', () => {
+  it('does not count a tracker partial month as perfect', () => {
     expect(
       isPerfectClosedMonth({
         completedDates: new Set([
-          '2026-08-29',
-          '2026-08-30',
-          '2026-08-31',
+          '2026-07-27',
+          '2026-07-28',
+          '2026-07-29',
+          '2026-07-30',
+          '2026-07-31',
         ]),
         completionMode: 'practice',
-        monthKey: '2026-08',
-        startDate: '2026-08-29',
-        today: '2026-09-01',
+        monthKey: '2026-07',
+        startDate: '2026-07-27',
+        today: '2026-08-01',
       }),
-    ).toBe(true)
+    ).toBe(false)
   })
 
   it('does not decorate the current month even when elapsed days are checked', () => {
@@ -146,13 +148,35 @@ describe('isPerfectClosedMonth', () => {
     ).toBe(false)
   })
 
+  it('does not decorate the current month on its last calendar day', () => {
+    expect(
+      isPerfectClosedMonth({
+        completedDates: new Set(
+          Array.from({ length: 31 }, (_, index) => {
+            const day = `${index + 1}`.padStart(2, '0')
+            return `2026-08-${day}`
+          }),
+        ),
+        completionMode: 'practice',
+        monthKey: '2026-08',
+        startDate: '2026-08-01',
+        today: '2026-08-31',
+      }),
+    ).toBe(false)
+  })
+
   it('uses yesterday as the abstinence eligibility boundary', () => {
     expect(
       isPerfectClosedMonth({
-        completedDates: new Set(['2026-08-30', '2026-08-31']),
+        completedDates: new Set(
+          Array.from({ length: 31 }, (_, index) => {
+            const day = `${index + 1}`.padStart(2, '0')
+            return `2026-08-${day}`
+          }),
+        ),
         completionMode: 'abstinence',
         monthKey: '2026-08',
-        startDate: '2026-08-30',
+        startDate: '2026-08-01',
         today: '2026-09-01',
       }),
     ).toBe(true)

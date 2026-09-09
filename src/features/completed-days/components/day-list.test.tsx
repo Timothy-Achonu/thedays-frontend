@@ -49,14 +49,36 @@ describe('DayList accessible controls', () => {
     expect(screen.getByText(/more/)).toBeInTheDocument()
   })
 
-  it('decorates a closed month when every eligible day was completed', () => {
+  it('decorates a closed month when every calendar day was completed', () => {
     renderDayList(
-      { startDate: '2026-07-30' },
-      new Set(['2026-07-30', '2026-07-31']),
-      '2026-08-02',
+      { startDate: '2026-07-01' },
+      new Set(
+        Array.from({ length: 31 }, (_, index) => {
+          const day = `${index + 1}`.padStart(2, '0')
+          return `2026-07-${day}`
+        }),
+      ),
+      '2026-08-01',
     )
 
     expect(screen.getByRole('img', { name: 'Perfect month' })).toBeInTheDocument()
     expect(screen.getByText('Perfect month')).toBeInTheDocument()
+  })
+
+  it('does not decorate a closed partial month', () => {
+    renderDayList(
+      { startDate: '2026-07-27' },
+      new Set([
+        '2026-07-27',
+        '2026-07-28',
+        '2026-07-29',
+        '2026-07-30',
+        '2026-07-31',
+      ]),
+      '2026-08-02',
+    )
+
+    expect(screen.queryByRole('img', { name: 'Perfect month' })).not.toBeInTheDocument()
+    expect(screen.queryByText('Perfect month')).not.toBeInTheDocument()
   })
 })

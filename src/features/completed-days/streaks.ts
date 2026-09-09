@@ -102,18 +102,19 @@ export function isPerfectClosedMonth({
   const monthEnd = addDaysToDate(nextMonthStart, -1)
   const latestEligibleDate = getLatestEligibleDate(completionMode, today)
 
+  if (compareDateStrings(monthEnd, today) >= 0) {
+    return false
+  }
+
   if (compareDateStrings(monthEnd, latestEligibleDate) > 0) {
     return false
   }
 
-  const firstRequiredDate =
-    compareDateStrings(startDate, monthStart) > 0 ? startDate : monthStart
-
-  if (compareDateStrings(firstRequiredDate, monthEnd) > 0) {
+  if (compareDateStrings(startDate, monthStart) > 0) {
     return false
   }
 
-  let cursor = firstRequiredDate
+  let cursor = monthStart
   while (compareDateStrings(cursor, monthEnd) <= 0) {
     if (!completedDates.has(cursor)) return false
     cursor = addDaysToDate(cursor, 1)
