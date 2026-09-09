@@ -15,11 +15,20 @@ const tracker: Tracker = {
   daysCount: 1,
 }
 
-function renderDayList(overrides: Partial<Tracker>, completed: ReadonlySet<string>) {
+function renderDayList(
+  overrides: Partial<Tracker>,
+  completed: ReadonlySet<string>,
+  today = '2026-08-24',
+) {
   const queryClient = new QueryClient()
   return render(
     <QueryClientProvider client={queryClient}>
-      <DayList tracker={{ ...tracker, ...overrides }} completedDates={completed} today="2026-08-24" onError={vi.fn()} />
+      <DayList
+        tracker={{ ...tracker, ...overrides }}
+        completedDates={completed}
+        today={today}
+        onError={vi.fn()}
+      />
     </QueryClientProvider>,
   )
 }
@@ -38,5 +47,16 @@ describe('DayList accessible controls', () => {
     renderDayList({ startDate: '1000-01-01' }, new Set())
     expect(screen.getAllByRole('checkbox')).toHaveLength(30)
     expect(screen.getByText(/more/)).toBeInTheDocument()
+  })
+
+  it('decorates a closed month when every eligible day was completed', () => {
+    renderDayList(
+      { startDate: '2026-07-30' },
+      new Set(['2026-07-30', '2026-07-31']),
+      '2026-08-02',
+    )
+
+    expect(screen.getByRole('img', { name: 'Perfect month' })).toBeInTheDocument()
+    expect(screen.getByText('Perfect month')).toBeInTheDocument()
   })
 })

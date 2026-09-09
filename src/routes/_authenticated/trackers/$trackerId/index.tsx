@@ -18,6 +18,7 @@ import { DeleteTrackerDialog } from '@/features/trackers/components/delete-track
 import { TodayCard } from '@/features/completed-days/components/today-card'
 import { DayList } from '@/features/completed-days/components/day-list'
 import { BulkDayActions } from '@/features/completed-days/components/bulk-day-actions'
+import { StreaksPanel } from '@/features/completed-days/components/streaks-panel'
 import { LandmarkCard } from '@/features/landmarks/components/landmark-card'
 import { NextLandmarkCard } from '@/features/landmarks/components/next-landmark-card'
 import {
@@ -153,6 +154,14 @@ function TrackerDetailPage() {
         ) : (
           <TodayCard tracker={tracker} completedDates={completedDates} today={today} onError={setDayError} />
         )}
+
+        {hasCompletionData ? (
+          <StreaksPanel
+            tracker={tracker}
+            completedDates={completedDates}
+            today={today}
+          />
+        ) : null}
 
         {hasCompletionData && daysQuery.isError ? (
           <p role="status" className="rounded-xl border border-sand-300 bg-sand-100 px-4 py-3 text-sm text-sand-900">

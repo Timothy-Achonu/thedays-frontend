@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useIsMutating } from '@tanstack/react-query'
+import { isPerfectClosedMonth } from '../streaks'
 import { resolveDayState } from '../../trackers/daily-status'
 import type { DayState } from '../../trackers/daily-status'
 import type { Tracker } from '@/types/trackers'
@@ -107,40 +108,64 @@ export function DayList({
             </div>
 
             <div className="mt-7 space-y-9">
-              {yearGroup.months.map((month) => (
-                <section
-                  key={month.key}
-                  aria-labelledby={`day-history-month-${month.key}`}
-                >
-                  <header className="mb-4 flex items-end gap-4">
-                    <h4
-                      id={`day-history-month-${month.key}`}
-                      className="font-display text-3xl font-semibold tracking-tight text-earth-900 sm:text-4xl"
-                    >
-                      <time dateTime={month.key}>{month.label}</time>
-                    </h4>
-                    <span
-                      aria-hidden="true"
-                      className="mb-2 h-px flex-1 bg-earth-200"
-                    />
-                  </header>
+              {yearGroup.months.map((month) => {
+                const isPerfectMonth = isPerfectClosedMonth({
+                  completedDates,
+                  completionMode: tracker.completionMode,
+                  monthKey: month.key,
+                  startDate: tracker.startDate,
+                  today,
+                })
 
-                  <ol className="space-y-1.5">
-                    {month.dates.map((date, index) => (
-                      <DayRow
-                        key={date}
-                        date={date}
-                        tracker={tracker}
-                        completedDates={completedDates}
-                        today={today}
-                        onToggle={toggle}
-                        index={month.startIndex + index}
-                        isBusy={isCompletionPending}
+                return (
+                  <section
+                    key={month.key}
+                    aria-labelledby={`day-history-month-${month.key}`}
+                  >
+                    <header className="mb-4 flex items-end gap-4">
+                      <h4
+                        id={`day-history-month-${month.key}`}
+                        className={cn(
+                          'inline-flex min-w-0 items-center gap-2 font-display text-3xl font-semibold tracking-tight sm:text-4xl',
+                          isPerfectMonth ? 'text-sand-800' : 'text-earth-900',
+                        )}
+                      >
+                        {isPerfectMonth ? <GoldStarIcon /> : null}
+                        <time dateTime={month.key}>{month.label}</time>
+                      </h4>
+                      <span
+                        aria-hidden="true"
+                        className={cn(
+                          'mb-2 h-px flex-1',
+                          isPerfectMonth
+                            ? 'bg-gradient-to-r from-sand-500 to-transparent'
+                            : 'bg-earth-200',
+                        )}
                       />
-                    ))}
-                  </ol>
-                </section>
-              ))}
+                      {isPerfectMonth ? (
+                        <span className="mb-1 hidden rounded-full border border-sand-400 bg-sand-100 px-2.5 py-1 text-xs font-bold uppercase tracking-[0.16em] text-sand-800 sm:inline-flex">
+                          Perfect month
+                        </span>
+                      ) : null}
+                    </header>
+
+                    <ol className="space-y-1.5">
+                      {month.dates.map((date, index) => (
+                        <DayRow
+                          key={date}
+                          date={date}
+                          tracker={tracker}
+                          completedDates={completedDates}
+                          today={today}
+                          onToggle={toggle}
+                          index={month.startIndex + index}
+                          isBusy={isCompletionPending}
+                        />
+                      ))}
+                    </ol>
+                  </section>
+                )
+              })}
             </div>
           </section>
         ))}
@@ -316,6 +341,25 @@ function CheckMark() {
         stroke="currentColor"
         strokeWidth="3"
         strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+function GoldStarIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      className="size-7 shrink-0 text-warning-500 drop-shadow-sm sm:size-8"
+      aria-label="Perfect month"
+      role="img"
+    >
+      <path
+        d="m12 3.25 2.64 5.35 5.91.86-4.28 4.17 1.01 5.89L12 16.74l-5.28 2.78 1.01-5.89-4.28-4.17 5.91-.86L12 3.25Z"
+        fill="currentColor"
+        stroke="currentColor"
         strokeLinejoin="round"
       />
     </svg>
