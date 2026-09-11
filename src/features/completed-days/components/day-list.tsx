@@ -1,12 +1,16 @@
 import { useState } from 'react'
 import { useIsMutating } from '@tanstack/react-query'
 import { isPerfectClosedMonth } from '../streaks'
-import { resolveDayState } from '../../trackers/daily-status'
+import { canMarkOn, resolveDayState } from '../../trackers/daily-status'
+import { BadDayChangeDialog, DayStatusActions } from './day-status-actions'
 import type { DayState } from '../../trackers/daily-status'
+import type { BadDayChange } from './day-status-actions'
 import type { Tracker } from '@/types/trackers'
 import {
   COMPLETED_DAY_MUTATION_KEY,
+  useMarkBadDayMutation,
   useMarkCompletedDayMutation,
+  useUnmarkBadDayMutation,
   useUnmarkCompletedDayMutation,
 } from '@/lib/app/trackers'
 import {
@@ -40,6 +44,7 @@ const monthNameFormatter = new Intl.DateTimeFormat(undefined, {
 interface DayListProps {
   tracker: Tracker
   completedDates: ReadonlySet<string>
+  badDates: ReadonlySet<string>
   today: string
   onError: (message: string) => void
 }
@@ -52,12 +57,17 @@ interface DayListProps {
 export function DayList({
   tracker,
   completedDates,
+  badDates,
   today,
   onError,
 }: DayListProps) {
   const [visibleCount, setVisibleCount] = useState(INITIAL_BATCH)
+  const [badDayChange, setBadDayChange] = useState<BadDayChange | null>(null)
+  const [dialogError, setDialogError] = useState<string | null>(null)
   const markMutation = useMarkCompletedDayMutation()
   const unmarkMutation = useUnmarkCompletedDayMutation()
+  const markBadMutation = useMarkBadDayMutation()
+  const unmarkBadMutation = useUnmarkBadDayMutation()
   const isCompletionPending =
     useIsMutating({ mutationKey: COMPLETED_DAY_MUTATION_KEY }) > 0
 
@@ -71,7 +81,13 @@ export function DayList({
   const yearGroups = groupDaysByCalendar(visibleDays)
   const remainingCount = totalDays - visibleDays.length
 
-  const toggle = (date: string, isCompleted: boolean) => {
+  const toggleGood = (date: string, isCompleted: boolean, isBad: boolean) => {
+    if (isBad) {
+      setDialogError(null)
+      setBadDayChange({ date, action: 'mark-good' })
+      return
+    }
+
     const mutation = isCompleted ? unmarkMutation : markMutation
     mutation.mutate(
       { trackerId: tracker.id, date },
@@ -79,6 +95,49 @@ export function DayList({
         onError: () =>
           onError('The change could not be saved. Please try again.'),
       },
+    )
+  }
+
+  const toggleBad = (date: string, isBad: boolean) => {
+    if (isBad) {
+      setDialogError(null)
+      setBadDayChange({ date, action: 'unmark-bad' })
+      return
+    }
+
+    markBadMutation.mutate(
+      { trackerId: tracker.id, date },
+      {
+        onError: () =>
+          onError('The change could not be saved. Please try again.'),
+      },
+    )
+  }
+
+  const confirmBadDayChange = () => {
+    if (!badDayChange) return
+    setDialogError(null)
+    const options = {
+      onSuccess: () => setBadDayChange(null),
+      onError: () =>
+        setDialogError('The change could not be saved. Please try again.'),
+    }
+
+    if (badDayChange.action === 'mark-good') {
+      markMutation.mutate(
+        {
+          trackerId: tracker.id,
+          date: badDayChange.date,
+          replaceBad: true,
+        },
+        options,
+      )
+      return
+    }
+
+    unmarkBadMutation.mutate(
+      { trackerId: tracker.id, date: badDayChange.date },
+      options,
     )
   }
 
@@ -156,8 +215,10 @@ export function DayList({
                           date={date}
                           tracker={tracker}
                           completedDates={completedDates}
+                          badDates={badDates}
                           today={today}
-                          onToggle={toggle}
+                          onToggleGood={toggleGood}
+                          onToggleBad={toggleBad}
                           index={month.startIndex + index}
                           isBusy={isCompletionPending}
                         />
@@ -187,6 +248,14 @@ export function DayList({
         Showing the latest {visibleDays.length.toLocaleString()} of{' '}
         {totalDays.toLocaleString()} days since {tracker.startDate}.
       </p>
+
+      <BadDayChangeDialog
+        change={badDayChange}
+        isPending={markMutation.isPending || unmarkBadMutation.isPending}
+        error={dialogError}
+        onConfirm={confirmBadDayChange}
+        onClose={() => setBadDayChange(null)}
+      />
     </section>
   )
 }
@@ -209,9 +278,7 @@ function groupDaysByCalendar(days: Array<string>): Array<YearGroup> {
     if (!monthGroup || monthGroup.key !== monthKey) {
       monthGroup = {
         key: monthKey,
-        label: monthNameFormatter.format(
-          new Date(`${monthKey}-01T00:00:00Z`),
-        ),
+        label: monthNameFormatter.format(new Date(`${monthKey}-01T00:00:00Z`)),
         startIndex: index,
         dates: [],
       }
@@ -228,22 +295,27 @@ function DayRow({
   date,
   tracker,
   completedDates,
+  badDates,
   today,
-  onToggle,
+  onToggleGood,
+  onToggleBad,
   index,
   isBusy,
 }: Omit<DayListProps, 'onError'> & {
   date: string
-  onToggle: (date: string, isCompleted: boolean) => void
+  onToggleGood: (date: string, isCompleted: boolean, isBad: boolean) => void
+  onToggleBad: (date: string, isBad: boolean) => void
   index: number
   isBusy: boolean
 }) {
   const isCompleted = completedDates.has(date)
+  const isBad = badDates.has(date)
   const state: DayState = resolveDayState(
     tracker.completionMode,
     today,
     date,
     isCompleted,
+    isBad,
   )
   const relativeLabel =
     date === today
@@ -252,6 +324,92 @@ function DayRow({
         ? 'Yesterday'
         : null
   const rowDelay = Math.min(index, 14) * 30
+
+  const relativeBadge = relativeLabel ? (
+    <span
+      className={cn(
+        'shrink-0 rounded-full px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-widest',
+        relativeLabel === 'Today'
+          ? 'bg-terracotta-100 text-terracotta-700'
+          : 'bg-earth-100 text-earth-500',
+      )}
+    >
+      {relativeLabel}
+    </span>
+  ) : null
+
+  if (tracker.completionMode === 'abstinence') {
+    return (
+      <li
+        className="animate-fade-in-up"
+        style={{
+          animationDelay: `${rowDelay}ms`,
+          animationFillMode: 'backwards',
+        }}
+      >
+        <div
+          className={cn(
+            'flex flex-col gap-3 rounded-2xl border px-4 py-3 transition-colors sm:flex-row sm:items-center',
+            state === 'completed' && 'border-sage-200 bg-sage-50/70',
+            state === 'bad' && 'border-error-200 bg-error-50/70',
+            (state === 'completable' || state === 'unavailable') &&
+              'border-earth-100 bg-white',
+          )}
+        >
+          <div className="flex min-w-0 flex-1 items-center gap-3">
+            <span
+              aria-hidden="true"
+              className={cn(
+                'grid size-7 shrink-0 place-items-center rounded-full border-2',
+                state === 'completed' &&
+                  'border-sage-500 bg-sage-500 text-white',
+                state === 'bad' && 'border-error-500 bg-error-500 text-white',
+                (state === 'completable' || state === 'unavailable') &&
+                  'border-earth-300 bg-white',
+              )}
+            >
+              {state === 'completed' ? <CheckMark /> : null}
+              {state === 'bad' ? <CrossMark /> : null}
+            </span>
+
+            <span className="min-w-0 flex-1">
+              <span
+                className={cn(
+                  'block truncate text-sm font-medium',
+                  state === 'completed' && 'text-sage-900',
+                  state === 'bad' && 'text-error-700',
+                  (state === 'completable' || state === 'unavailable') &&
+                    'text-earth-800',
+                )}
+              >
+                {formatDayListLabel(date, today)}
+              </span>
+              <span className="mt-0.5 block text-xs text-earth-400">
+                {state === 'completed'
+                  ? 'Good day'
+                  : state === 'bad'
+                    ? 'Marked bad'
+                    : state === 'unavailable'
+                      ? 'Good becomes available after the day ends'
+                      : 'Not marked'}
+              </span>
+            </span>
+            {relativeBadge}
+          </div>
+
+          <DayStatusActions
+            date={date}
+            isGood={isCompleted}
+            isBad={isBad}
+            canMarkGood={canMarkOn(tracker.completionMode, today, date)}
+            isBusy={isBusy}
+            onGood={() => onToggleGood(date, isCompleted, isBad)}
+            onBad={() => onToggleBad(date, isBad)}
+          />
+        </div>
+      </li>
+    )
+  }
 
   return (
     <li
@@ -266,7 +424,7 @@ function DayRow({
         role="checkbox"
         aria-checked={isCompleted}
         disabled={state === 'unavailable' || isBusy}
-        onClick={() => onToggle(date, isCompleted)}
+        onClick={() => onToggleGood(date, isCompleted, false)}
         aria-label={
           state === 'unavailable'
             ? `${formatDayListLabel(date, today)} is unavailable until the day ends`
@@ -316,18 +474,7 @@ function DayRow({
           ) : null}
         </span>
 
-        {relativeLabel ? (
-          <span
-            className={cn(
-              'shrink-0 rounded-full px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-widest',
-              relativeLabel === 'Today'
-                ? 'bg-terracotta-100 text-terracotta-700'
-                : 'bg-earth-100 text-earth-500',
-            )}
-          >
-            {relativeLabel}
-          </span>
-        ) : null}
+        {relativeBadge}
       </button>
     </li>
   )
@@ -342,6 +489,19 @@ function CheckMark() {
         strokeWidth="3"
         strokeLinecap="round"
         strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+function CrossMark() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="size-4" aria-hidden="true">
+      <path
+        d="m7 7 10 10M17 7 7 17"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
       />
     </svg>
   )

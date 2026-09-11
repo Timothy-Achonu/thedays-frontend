@@ -1,9 +1,14 @@
+import { useState } from 'react'
 import { useIsMutating } from '@tanstack/react-query'
 import { getPrimaryDay } from '../../trackers/daily-status'
+import { BadDayChangeDialog, DayStatusActions } from './day-status-actions'
+import type { BadDayChange } from './day-status-actions'
 import type { Tracker } from '@/types/trackers'
 import {
   COMPLETED_DAY_MUTATION_KEY,
+  useMarkBadDayMutation,
   useMarkCompletedDayMutation,
+  useUnmarkBadDayMutation,
   useUnmarkCompletedDayMutation,
 } from '@/lib/app/trackers'
 import { formatDateString } from '@/lib/utils/dates'
@@ -11,62 +16,183 @@ import { formatDateString } from '@/lib/utils/dates'
 interface TodayCardProps {
   tracker: Tracker
   completedDates: ReadonlySet<string>
+  badDates: ReadonlySet<string>
   today: string
   onError: (message: string) => void
 }
 
-/**
- * The primary daily control, per PRD §27: "Mark as completed" for today on a
- * Practice tracker; the latest finished day on an Abstinence tracker. Today is
- * shown as visible-but-locked while an Abstinence day is in progress.
- */
+/** The prominent daily action for Practice and Abstinence trackers. */
 export function TodayCard({
   tracker,
   completedDates,
+  badDates,
   today,
   onError,
 }: TodayCardProps) {
   const markMutation = useMarkCompletedDayMutation()
   const unmarkMutation = useUnmarkCompletedDayMutation()
+  const markBadMutation = useMarkBadDayMutation()
+  const unmarkBadMutation = useUnmarkBadDayMutation()
+  const [badDayChange, setBadDayChange] = useState<BadDayChange | null>(null)
+  const [dialogError, setDialogError] = useState<string | null>(null)
   const isCompletionPending =
     useIsMutating({ mutationKey: COMPLETED_DAY_MUTATION_KEY }) > 0
 
   const primaryDay = getPrimaryDay(tracker, today)
-  const primaryCompleted = primaryDay
-    ? completedDates.has(primaryDay.date)
-    : false
-
-  const toggle = (date: string, isCompleted: boolean) => {
-    const mutation = isCompleted ? unmarkMutation : markMutation
-    mutation.mutate(
-      { trackerId: tracker.id, date },
-      {
-        onError: () =>
-          onError('The change could not be saved. Please try again.'),
-      },
-    )
-  }
-
-  if (!primaryDay) {
-    return (
-      <section className="animate-fade-in-up relative overflow-hidden rounded-3xl border border-sand-300/70 bg-gradient-to-br from-sand-100 to-white p-7 shadow-organic-sm">
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-sand-700">
-          Day one in progress
-        </p>
-        <p className="mt-2 font-display text-xl font-semibold text-earth-900">
-          Your first day becomes available after it ends.
-        </p>
-        <p className="mt-1 max-w-md leading-6 text-earth-600">
-          Abstinence trackers only count whole finished days — come back
-          tomorrow to mark your first.
-        </p>
-      </section>
-    )
-  }
-
-  const isPrimaryToday = primaryDay.date === today
   const isBusy =
-    markMutation.isPending || unmarkMutation.isPending || isCompletionPending
+    markMutation.isPending ||
+    unmarkMutation.isPending ||
+    markBadMutation.isPending ||
+    unmarkBadMutation.isPending ||
+    isCompletionPending
+
+  const saveError = () =>
+    onError('The change could not be saved. Please try again.')
+
+  const toggleGood = (date: string, isGood: boolean, isBad: boolean) => {
+    if (isBad) {
+      setDialogError(null)
+      setBadDayChange({ date, action: 'mark-good' })
+      return
+    }
+
+    const mutation = isGood ? unmarkMutation : markMutation
+    mutation.mutate({ trackerId: tracker.id, date }, { onError: saveError })
+  }
+
+  const toggleBad = (date: string, isBad: boolean) => {
+    if (isBad) {
+      setDialogError(null)
+      setBadDayChange({ date, action: 'unmark-bad' })
+      return
+    }
+
+    markBadMutation.mutate(
+      { trackerId: tracker.id, date },
+      { onError: saveError },
+    )
+  }
+
+  const confirmBadDayChange = () => {
+    if (!badDayChange) return
+    setDialogError(null)
+
+    const options = {
+      onSuccess: () => setBadDayChange(null),
+      onError: () =>
+        setDialogError('The change could not be saved. Please try again.'),
+    }
+
+    if (badDayChange.action === 'mark-good') {
+      markMutation.mutate(
+        {
+          trackerId: tracker.id,
+          date: badDayChange.date,
+          replaceBad: true,
+        },
+        options,
+      )
+      return
+    }
+
+    unmarkBadMutation.mutate(
+      { trackerId: tracker.id, date: badDayChange.date },
+      options,
+    )
+  }
+
+  if (tracker.completionMode === 'abstinence') {
+    const todayIsBad = badDates.has(today)
+
+    return (
+      <>
+        <section className="animate-fade-in-up relative overflow-hidden rounded-3xl border border-earth-100 bg-white p-7 shadow-organic-md">
+          <div className="absolute left-0 top-0 h-full w-1 bg-gradient-to-b from-terracotta-500 via-error-400 to-sand-400" />
+
+          <div className="pl-2">
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-terracotta-600">
+                  Today
+                </p>
+                <p className="mt-1.5 font-display text-2xl font-semibold text-earth-900">
+                  {formatDateString(today, 'full')}
+                </p>
+                <p aria-live="polite" className="mt-1 text-sm text-earth-500">
+                  {todayIsBad
+                    ? 'Marked bad. You can still return it to in progress.'
+                    : 'In progress. Record a failure now so it is not forgotten.'}
+                </p>
+              </div>
+
+              <DayStatusActions
+                date={today}
+                isGood={false}
+                isBad={todayIsBad}
+                canMarkGood={false}
+                isBusy={isBusy}
+                variant="card"
+                onGood={() => undefined}
+                onBad={() => toggleBad(today, todayIsBad)}
+              />
+            </div>
+
+            <p className="mt-3 text-xs text-earth-400">
+              A good day becomes available after midnight in your account
+              timezone.
+            </p>
+
+            {primaryDay ? (
+              <div className="mt-5 flex flex-col gap-4 border-t border-dashed border-earth-200 pt-5 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-earth-400">
+                    {primaryDay.relativeLabel}
+                  </p>
+                  <p className="mt-1 font-display text-lg font-semibold text-earth-900">
+                    {formatDateString(primaryDay.date, 'full')}
+                  </p>
+                </div>
+                <DayStatusActions
+                  date={primaryDay.date}
+                  isGood={completedDates.has(primaryDay.date)}
+                  isBad={badDates.has(primaryDay.date)}
+                  canMarkGood
+                  isBusy={isBusy}
+                  onGood={() =>
+                    toggleGood(
+                      primaryDay.date,
+                      completedDates.has(primaryDay.date),
+                      badDates.has(primaryDay.date),
+                    )
+                  }
+                  onBad={() =>
+                    toggleBad(primaryDay.date, badDates.has(primaryDay.date))
+                  }
+                />
+              </div>
+            ) : (
+              <p className="mt-5 border-t border-dashed border-earth-200 pt-4 text-sm text-earth-500">
+                This tracker started today, so there is no finished day to mark
+                good yet.
+              </p>
+            )}
+          </div>
+        </section>
+
+        <BadDayChangeDialog
+          change={badDayChange}
+          isPending={markMutation.isPending || unmarkBadMutation.isPending}
+          error={dialogError}
+          onConfirm={confirmBadDayChange}
+          onClose={() => setBadDayChange(null)}
+        />
+      </>
+    )
+  }
+
+  if (!primaryDay) return null
+
+  const primaryCompleted = completedDates.has(primaryDay.date)
 
   return (
     <section className="animate-fade-in-up relative overflow-hidden rounded-3xl border border-earth-100 bg-white p-7 shadow-organic-md">
@@ -90,7 +216,7 @@ export function TodayCard({
           role="checkbox"
           aria-checked={primaryCompleted}
           disabled={isBusy}
-          onClick={() => toggle(primaryDay.date, primaryCompleted)}
+          onClick={() => toggleGood(primaryDay.date, primaryCompleted, false)}
           aria-label={`${primaryCompleted ? 'Unmark' : 'Mark'} ${formatDateString(primaryDay.date, 'long')} as completed`}
           className={[
             'group inline-flex min-h-14 items-center justify-center gap-3 rounded-2xl px-6 py-3.5 text-lg font-semibold',
@@ -105,18 +231,12 @@ export function TodayCard({
           {isBusy ? (
             <span>Saving…</span>
           ) : primaryCompleted ? (
-            <span>{isPrimaryToday ? 'Completed' : 'Marked'}</span>
+            <span>Completed</span>
           ) : (
             <span>Mark as completed</span>
           )}
         </button>
       </div>
-
-      {!isPrimaryToday && !primaryCompleted ? (
-        <p className="mt-4 border-t border-dashed border-earth-200 pt-3 text-sm text-earth-500">
-          Today is still in progress and unlocks after midnight.
-        </p>
-      ) : null}
     </section>
   )
 }

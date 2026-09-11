@@ -13,7 +13,9 @@ import {
   createTracker,
   deleteLandmark,
   deleteTracker,
+  markBadDay,
   markCompletedDay,
+  unmarkBadDay,
   unmarkCompletedDay,
   updateLandmark,
   updateTracker,
@@ -23,8 +25,10 @@ import type {
   CreateLandmarkInput,
   CreateTrackerInput,
   LandmarksResponse,
+  MarkBadDayInput,
   MarkCompletedDayInput,
   Tracker,
+  UnmarkBadDayInput,
   UnmarkCompletedDayInput,
   UpdateLandmarkInput,
   UpdateTrackerInput,
@@ -100,6 +104,8 @@ export function useCreateTrackerMutation() {
       queryClient.setQueryData(completedDaysQueryKey(tracker.id), {
         dates: [],
         total: 0,
+        badDates: [],
+        badTotal: 0,
       })
       queryClient.invalidateQueries({ queryKey: TRACKERS_QUERY_KEY })
       invalidateDashboardSummary(queryClient)
@@ -170,6 +176,10 @@ export function useMarkCompletedDayMutation() {
           ...previous,
           dates: insertDateSorted(previous.dates, input.date),
           total: previous.total + 1,
+          badDates: removeDate(previous.badDates, input.date),
+          badTotal: previous.badDates.includes(input.date)
+            ? Math.max(0, previous.badTotal - 1)
+            : previous.badTotal,
         })
       }
 
@@ -205,6 +215,97 @@ export function useMarkCompletedDayMutation() {
         exact: true,
       })
       invalidateDashboardSummary(queryClient)
+    },
+  })
+}
+
+/** Marks an Abstinence date bad, replacing a completion when necessary. */
+export function useMarkBadDayMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationKey: [...COMPLETED_DAY_MUTATION_KEY, 'mark-bad'],
+    mutationFn: async (input: MarkBadDayInput): Promise<void> => {
+      await markBadDay(input)
+    },
+    onMutate: async (input): Promise<OptimisticContext> => {
+      const queryKey = completedDaysQueryKey(input.trackerId)
+      await queryClient.cancelQueries({ queryKey })
+      const previous = queryClient.getQueryData<CompletedDaysResponse>(queryKey)
+
+      if (previous && !previous.badDates.includes(input.date)) {
+        const wasCompleted = previous.dates.includes(input.date)
+        queryClient.setQueryData<CompletedDaysResponse>(queryKey, {
+          ...previous,
+          dates: removeDate(previous.dates, input.date),
+          total: wasCompleted
+            ? Math.max(0, previous.total - 1)
+            : previous.total,
+          badDates: insertDateSorted(previous.badDates, input.date),
+          badTotal: previous.badTotal + 1,
+        })
+      }
+
+      return { previousCompletedDays: previous }
+    },
+    onError: (_error, input, context) => {
+      if (context?.previousCompletedDays) {
+        queryClient.setQueryData(
+          completedDaysQueryKey(input.trackerId),
+          context.previousCompletedDays,
+        )
+      }
+    },
+    onSettled: (_data, _error, input) => {
+      void queryClient.invalidateQueries({ queryKey: TRACKERS_QUERY_KEY })
+      void queryClient.refetchQueries({
+        queryKey: TRACKERS_QUERY_KEY,
+        exact: true,
+      })
+      void queryClient.invalidateQueries({
+        queryKey: landmarksQueryKey(input.trackerId),
+      })
+      invalidateDashboardSummary(queryClient)
+    },
+  })
+}
+
+/** Removes an explicit bad state without marking the date good. */
+export function useUnmarkBadDayMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationKey: [...COMPLETED_DAY_MUTATION_KEY, 'unmark-bad'],
+    mutationFn: async (input: UnmarkBadDayInput): Promise<void> => {
+      await unmarkBadDay(input)
+    },
+    onMutate: async (input): Promise<OptimisticContext> => {
+      const queryKey = completedDaysQueryKey(input.trackerId)
+      await queryClient.cancelQueries({ queryKey })
+      const previous = queryClient.getQueryData<CompletedDaysResponse>(queryKey)
+
+      if (previous?.badDates.includes(input.date)) {
+        queryClient.setQueryData<CompletedDaysResponse>(queryKey, {
+          ...previous,
+          badDates: removeDate(previous.badDates, input.date),
+          badTotal: Math.max(0, previous.badTotal - 1),
+        })
+      }
+
+      return { previousCompletedDays: previous }
+    },
+    onError: (_error, input, context) => {
+      if (context?.previousCompletedDays) {
+        queryClient.setQueryData(
+          completedDaysQueryKey(input.trackerId),
+          context.previousCompletedDays,
+        )
+      }
+    },
+    onSettled: (_data, _error, input) => {
+      void queryClient.invalidateQueries({
+        queryKey: completedDaysQueryKey(input.trackerId),
+      })
     },
   })
 }

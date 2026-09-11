@@ -7,13 +7,14 @@ import { completedDaysQueryOptions, useTrackersQuery } from '@/lib/app/trackers'
 export interface TrackerWithDays {
   tracker: Tracker
   completedDates: ReadonlySet<string>
+  badDates: ReadonlySet<string>
   status: TrackerDailyStatus | null
   statusState: 'loading' | 'ready' | 'failed'
 }
 
 /**
- * Trackers enriched with their completed-day sets so dashboard cards can show
- * live today/yesterday status. One small query per tracker, in parallel.
+ * Trackers enriched with completed and bad-date sets so dashboard cards can
+ * show live today/yesterday status. One small query per tracker, in parallel.
  */
 export function useTrackersWithDays(today: string | undefined) {
   const trackersQuery = useTrackersQuery()
@@ -33,6 +34,7 @@ export function useTrackersWithDays(today: string | undefined) {
         return {
           tracker,
           completedDates: new Set(daysData?.dates ?? []),
+          badDates: new Set(daysData?.badDates ?? []),
           status: null,
           statusState: 'failed',
         }
@@ -42,16 +44,19 @@ export function useTrackersWithDays(today: string | undefined) {
         return {
           tracker,
           completedDates: new Set<string>(),
+          badDates: new Set<string>(),
           status: null,
           statusState: 'loading',
         }
       }
 
       const completedDates = new Set(daysData.dates)
+      const badDates = new Set(daysData.badDates)
       return {
         tracker,
         completedDates,
-        status: getTrackerDailyStatus(tracker, completedDates, today),
+        badDates,
+        status: getTrackerDailyStatus(tracker, completedDates, badDates, today),
         statusState: 'ready',
       }
     },

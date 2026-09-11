@@ -48,9 +48,23 @@ export interface CompletedDaysResponse {
   /** Sorted ascending `YYYY-MM-DD`. */
   dates: Array<string>
   total: number
+  /** Explicitly bad Abstinence dates, sorted ascending. */
+  badDates: Array<string>
+  badTotal: number
 }
 
 export interface MarkCompletedDayInput {
+  trackerId: string
+  date: string
+  replaceBad?: true
+}
+
+export interface MarkBadDayInput {
+  trackerId: string
+  date: string
+}
+
+export interface UnmarkBadDayInput {
   trackerId: string
   date: string
 }
@@ -63,11 +77,13 @@ export interface UnmarkCompletedDayInput {
 export interface CheckAllCompletedDaysResponse {
   added: number
   total: number
+  preservedBad: number
 }
 
 export interface ClearAllCompletedDaysResponse {
   cleared: number
   total: number
+  preservedBad: number
 }
 
 /** Landmark with server-computed progress against its tracker's current count. */
@@ -116,8 +132,13 @@ export type TrackerErrorCode =
   | 'DATE_BEFORE_START'
   | 'DATE_NOT_COMPLETABLE_YET'
   | 'START_DATE_AFTER_COMPLETION'
+  | 'START_DATE_AFTER_RECORDED_DAY'
   | 'BACKFILL_RANGE_TOO_LARGE'
   | 'DUPLICATE_COMPLETION'
+  | 'BAD_DAY_NOT_ALLOWED'
+  | 'BAD_DAY_CONFIRMATION_REQUIRED'
+  | 'BAD_DAY_NOT_FOUND'
+  | 'DUPLICATE_BAD_DAY'
   | 'DUPLICATE_LANDMARK_TARGET'
   | 'LANDMARK_NOT_REACHED'
   | 'RATE_LIMIT_EXCEEDED'

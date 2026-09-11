@@ -106,12 +106,12 @@ Do **not** import TypeScript files from `thedays-backend`. Call `VITE_API_URL` w
 ### Domain invariants
 
 - **Auth:** Cookie session via the API. Frontend route guards are UX only; the backend is authoritative.
-- **Day list:** Generate calendar days client-side from `tracker.startDate` through the user’s current calendar date. Incomplete days are missing completion strings, not API rows. Do not render future dates. Paginate or batch long histories (30/60/90); do not mount thousands of day rows at once.
+- **Day list:** Generate calendar days client-side from `tracker.startDate` through the user’s current calendar date. A date with neither a completion nor an Abstinence bad-day string is unreviewed. Do not render future dates. Paginate or batch long histories (30/60/90); do not mount thousands of day rows at once.
 - **TheDays count:** Display the count of completed days returned by the API, never `today - startDate`.
-- **Optimistic UI:** Complete/uncomplete may update immediately, then rollback and show an error if the request fails.
+- **Optimistic UI:** Good, bad, and unmarked transitions may update immediately, then rollback and show an error if the request fails. A bad-to-good transition must be atomic and explicit.
 - **Dates:** Send and receive `YYYY-MM-DD`. Use the user’s timezone (profile, falling back to `Intl`) to decide “today”—not UTC-only `Date` math.
-- **Accessibility:** Day controls need semantic labels such as `Mark August 16, 2026 as completed`, keyboard access, and visible focus.
-- **Completion mode:** Required at create; not editable later. Practice: today is the primary CTA and is completable. Abstinence: today is visible and disabled (“available after the day ends”); the primary CTA is yesterday / the latest finished day. Create requires an explicit Practice or Abstinence choice.
+- **Accessibility:** Day controls need semantic Good/Bad labels, keyboard access, pressed state, and visible focus. Confirmation uses the shared responsive modal/bottom-sheet dialog.
+- **Completion mode:** Required at create; not editable later. Practice: today is the primary CTA and is completable. Abstinence: today’s Good action is disabled until the day ends, but Bad is available immediately. Unmarking bad returns today to in-progress; finished bad days require confirmation before becoming good. Create requires an explicit Practice or Abstinence choice.
 
 Do not apply one global “today” or “day must be over” rule.
 

@@ -19,12 +19,14 @@ type BulkAction = 'check' | 'uncheck' | null
 interface BulkDayActionsProps {
   tracker: Tracker
   completedDates: ReadonlySet<string>
+  badDates: ReadonlySet<string>
   today: string
 }
 
 export function BulkDayActions({
   tracker,
   completedDates,
+  badDates,
   today,
 }: BulkDayActionsProps) {
   const [action, setAction] = useState<BulkAction>(null)
@@ -37,9 +39,14 @@ export function BulkDayActions({
     mutationKey: COMPLETED_DAY_MUTATION_KEY,
   })
 
-  const { lastEligibleBoundary, eligibleTotal, completedEligibleCount } =
-    getEligibleProgress(tracker, completedDates, today)
-  const uncheckedEligibleCount = eligibleTotal - completedEligibleCount
+  const {
+    lastEligibleBoundary,
+    eligibleTotal,
+    completedEligibleCount,
+    badEligibleCount,
+  } = getEligibleProgress(tracker, completedDates, badDates, today)
+  const uncheckedEligibleCount =
+    eligibleTotal - completedEligibleCount - badEligibleCount
   const completedCount = completedDates.size
   const isCheckPending = checkAllMutation.isPending
   const isClearPending = clearAllMutation.isPending
@@ -65,11 +72,15 @@ export function BulkDayActions({
   const confirmCheckAll = () => {
     setDialogError(null)
     checkAllMutation.mutate(tracker.id, {
-      onSuccess: ({ added, total }) => {
+      onSuccess: ({ added, total, preservedBad }) => {
+        const preservedCopy =
+          preservedBad > 0
+            ? ` ${formatDayCount(preservedBad)} marked bad ${preservedBad === 1 ? 'was' : 'were'} preserved.`
+            : ''
         setFeedback(
           added === 0
-            ? `All ${total.toLocaleString()} eligible days are already checked. Review Day history and uncheck any missed days.`
-            : `${formatDayCount(added)} checked. ${formatDayCount(total)} completed in total. Review Day history and uncheck any missed days.`,
+            ? `There were no unreviewed eligible days to mark good.${preservedCopy}`
+            : `${formatDayCount(added)} marked good. ${formatDayCount(total)} completed in total.${preservedCopy}`,
         )
         setAction(null)
       },
@@ -80,11 +91,15 @@ export function BulkDayActions({
   const confirmClearAll = () => {
     setDialogError(null)
     clearAllMutation.mutate(tracker.id, {
-      onSuccess: ({ cleared }) => {
+      onSuccess: ({ cleared, preservedBad }) => {
+        const preservedCopy =
+          preservedBad > 0
+            ? ` ${formatDayCount(preservedBad)} marked bad ${preservedBad === 1 ? 'was' : 'were'} preserved.`
+            : ''
         setFeedback(
           cleared === 0
-            ? 'There were no completed days to uncheck.'
-            : `${formatDayCount(cleared)} unchecked.`,
+            ? `There were no completed days to uncheck.${preservedCopy}`
+            : `${formatDayCount(cleared)} unchecked.${preservedCopy}`,
         )
         setAction(null)
       },
@@ -117,8 +132,8 @@ export function BulkDayActions({
                 : `${completedEligibleCount.toLocaleString()} of ${eligibleTotal.toLocaleString()} eligible days completed`}
             </p>
             <p className="mt-1 max-w-lg text-sm leading-5 text-earth-500">
-              Save time when most days qualify: mark them all, then uncheck any
-              missed days below.
+              Mark every unreviewed eligible day good at once. Dates already
+              marked bad stay untouched.
             </p>
           </div>
 
@@ -161,7 +176,7 @@ export function BulkDayActions({
         open={action === 'check'}
         onClose={closeDialog}
         title={`Mark ${formatDayCount(actionCount)} as completed?`}
-        description="This marks every currently unchecked eligible date as completed."
+        description="This marks every unreviewed eligible date as good and preserves dates already marked bad."
         size="sm"
         footer={
           <div className="flex flex-wrap justify-end gap-3">
@@ -197,9 +212,8 @@ export function BulkDayActions({
         ) : null}
 
         <p className="mt-3 text-sm leading-6 text-earth-600">
-          Afterward, review Day history and uncheck any days you missed. Your
-          completion total and landmark progress will update as you make
-          changes.
+          Your completion total and landmark progress update only for the new
+          good days. Existing bad records are never overwritten by this action.
         </p>
 
         {tracker.completionMode === 'abstinence' ? (
@@ -216,7 +230,7 @@ export function BulkDayActions({
         open={action === 'uncheck'}
         onClose={closeDialog}
         title={`Clear all ${formatDayCount(actionCount)}?`}
-        description="Every completion in this tracker will be permanently removed, including dates not currently loaded below."
+        description="Every good completion in this tracker will be removed, including dates not currently loaded below. Bad dates remain recorded."
         size="sm"
         footer={
           <div className="flex flex-wrap justify-end gap-3">
@@ -240,8 +254,8 @@ export function BulkDayActions({
         }
       >
         <div className="rounded-xl border border-error-200 bg-error-50 px-4 py-3 text-sm leading-6 text-error-700">
-          Your tracker and landmarks will remain, but completion totals and
-          landmark progress will be recalculated from zero.
+          Your tracker, landmarks, and bad-day history remain, but completion
+          totals and landmark progress will be recalculated from zero.
         </div>
 
         <p className="mt-3 text-sm leading-6 text-earth-600">
@@ -257,6 +271,7 @@ export function BulkDayActions({
 export function getEligibleProgress(
   tracker: Pick<Tracker, 'completionMode' | 'startDate'>,
   completedDates: ReadonlySet<string>,
+  badDates: ReadonlySet<string>,
   today: string,
 ) {
   const lastEligibleBoundary =
@@ -266,12 +281,23 @@ export function getEligibleProgress(
     lastEligibleBoundary,
   )
   let completedEligibleCount = 0
+  let badEligibleCount = 0
   completedDates.forEach((date) => {
     if (date >= tracker.startDate && date <= lastEligibleBoundary) {
       completedEligibleCount += 1
     }
   })
-  return { lastEligibleBoundary, eligibleTotal, completedEligibleCount }
+  badDates.forEach((date) => {
+    if (date >= tracker.startDate && date <= lastEligibleBoundary) {
+      badEligibleCount += 1
+    }
+  })
+  return {
+    lastEligibleBoundary,
+    eligibleTotal,
+    completedEligibleCount,
+    badEligibleCount,
+  }
 }
 
 function DialogError({ message }: { message: string | null }) {

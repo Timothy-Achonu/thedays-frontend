@@ -6,9 +6,11 @@ import type {
   CreateTrackerInput,
   LandmarkResponse,
   LandmarksResponse,
+  MarkBadDayInput,
   MarkCompletedDayInput,
   TrackerResponse,
   TrackersResponse,
+  UnmarkBadDayInput,
   UnmarkCompletedDayInput,
   UpdateLandmarkInput,
   UpdateTrackerInput,
@@ -82,6 +84,13 @@ export async function markCompletedDay(
 ): Promise<void> {
   await axiosClient.post(`${trackerUrl(input.trackerId)}/completed-days`, {
     date: input.date,
+    ...(input.replaceBad ? { replaceBad: true } : {}),
+  })
+}
+
+export async function markBadDay(input: MarkBadDayInput): Promise<void> {
+  await axiosClient.post(`${trackerUrl(input.trackerId)}/bad-days`, {
+    date: input.date,
   })
 }
 
@@ -90,6 +99,12 @@ export async function unmarkCompletedDay(
 ): Promise<void> {
   await axiosClient.delete(
     `${trackerUrl(input.trackerId)}/completed-days/${input.date}`,
+  )
+}
+
+export async function unmarkBadDay(input: UnmarkBadDayInput): Promise<void> {
+  await axiosClient.delete(
+    `${trackerUrl(input.trackerId)}/bad-days/${input.date}`,
   )
 }
 

@@ -30,7 +30,7 @@ Grill these before inventing behavior:
 - **Timezone in the browser vs user profile:** `new Date()` in UTC vs `Africa/Lagos` can mark the wrong calendar day. Prefer the account timezone, with `Intl.DateTimeFormat().resolvedOptions().timeZone` as a fallback—not UTC-only math.
 - **Generating thousands of day rows:** A tracker started years ago must not mount every day at once. Batch (30/60/90) or the UI will hitch on mobile.
 - **Counting elapsed days:** `today - startDate` is not TheDays. Missed days must not inflate the count.
-- **Completion mode:** Practice completes today; Abstinence completes the latest finished day. Today on Abstinence stays visible and disabled. “Today: incomplete” without “in progress” copy will feel broken. Do not enable today’s checkbox on Abstinence. Mode is chosen at create and is not editable.
+- **Completion mode:** Practice completes today. Abstinence cannot mark today good until it ends, but can mark it bad immediately and unmark it back to in-progress after confirmation. Keep Good disabled today while Bad remains available; do not collapse those actions into one checkbox. Mode is chosen at create and is not editable.
 - **localStorage tokens:** Cookie auth. Storing JWTs in `localStorage` contradicts the PRD.
 - **Frontend-only “security”:** Hiding `/dashboard` in TanStack Router does not protect another user’s tracker if the API is called directly.
 - **Google Auth:** Mentioned in the PRD without endpoints. Do not add OAuth unless asked.

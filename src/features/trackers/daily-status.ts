@@ -5,10 +5,11 @@ import { addDaysToDate } from '@/lib/utils/dates'
  * State of a single calendar day relative to its tracker's rules.
  *
  * - `completed` — has a stored completion
- * - `completable` — may be marked now under the tracker's completion mode
- * - `unavailable` — visible but cannot be marked (abstinence day in progress)
+ * - `bad` — has a stored Abstinence bad-day record
+ * - `completable` — may be marked good now under the completion mode
+ * - `unavailable` — visible but cannot be marked good yet
  */
-export type DayState = 'completed' | 'completable' | 'unavailable'
+export type DayState = 'completed' | 'bad' | 'completable' | 'unavailable'
 
 /** The primary daily action day for a tracker, per PRD §27. */
 export interface PrimaryDay {
@@ -57,12 +58,14 @@ export function resolveDayState(
   today: string,
   date: string,
   isCompleted: boolean,
+  isBad: boolean,
 ): DayState {
   if (isCompleted) return 'completed'
+  if (isBad) return 'bad'
   return canMarkOn(mode, today, date) ? 'completable' : 'unavailable'
 }
 
-export type DailyStatusTone = 'sage' | 'earth' | 'sand'
+export type DailyStatusTone = 'sage' | 'earth' | 'sand' | 'error'
 
 export interface TrackerDailyStatus {
   lines: Array<{ label: string; value: string; tone: DailyStatusTone }>
@@ -79,6 +82,7 @@ const NOT_MARKED_LABEL = 'Not yet marked'
 export function getTrackerDailyStatus(
   tracker: Pick<Tracker, 'completionMode' | 'startDate'>,
   completedDates: ReadonlySet<string>,
+  badDates: ReadonlySet<string>,
   today: string,
 ): TrackerDailyStatus {
   const todayCompleted = completedDates.has(today)
@@ -96,16 +100,23 @@ export function getTrackerDailyStatus(
   }
 
   const lines: TrackerDailyStatus['lines'] = [
-    { label: 'Today', value: 'In progress', tone: 'sand' },
+    badDates.has(today)
+      ? { label: 'Today', value: 'Marked bad', tone: 'error' }
+      : { label: 'Today', value: 'In progress', tone: 'sand' },
   ]
 
   const latestFinishedDay = addDaysToDate(today, -1)
   if (latestFinishedDay >= tracker.startDate) {
     const yesterdayCompleted = completedDates.has(latestFinishedDay)
+    const yesterdayBad = badDates.has(latestFinishedDay)
     lines.push({
       label: 'Yesterday',
-      value: yesterdayCompleted ? COMPLETED_LABEL : NOT_MARKED_LABEL,
-      tone: yesterdayCompleted ? 'sage' : 'earth',
+      value: yesterdayCompleted
+        ? COMPLETED_LABEL
+        : yesterdayBad
+          ? 'Marked bad'
+          : NOT_MARKED_LABEL,
+      tone: yesterdayCompleted ? 'sage' : yesterdayBad ? 'error' : 'earth',
     })
   }
 

@@ -377,7 +377,7 @@ Today is completable. Future dates are not.
 
 For something you want to avoid. A day can only be marked complete after the day has ended.
 
-“Day has ended” means the calendar date is strictly before today in the user's timezone. Today is displayed but not completable. Future dates are not displayed.
+“Day has ended” means the calendar date is strictly before today in the user's timezone. Today cannot be marked good until it ends, but it may be marked bad immediately if the abstinence goal is broken. Future dates are not displayed.
 
 Completion mode cannot be changed after creation in the MVP.
 
@@ -469,7 +469,7 @@ Which of those days may be marked completed depends on completion mode.
 
 On a Practice TheDays, the user may mark any displayed date, including today.
 
-On an Abstinence TheDays, the user may mark any displayed date strictly before today. Today's checkbox is visible and disabled.
+On an Abstinence TheDays, the user may mark any displayed date through today as bad. A date may be marked good only when it is strictly before today. Today’s Good control is disabled while its Bad control remains available.
 
 Practice example, current date August 16:
 
@@ -513,6 +513,10 @@ The following rules apply:
 - The same date must never contribute more than one to the total.
 - Completing today is allowed only on a Practice TheDays.
 - On an Abstinence TheDays, a day cannot be marked complete until that calendar day has ended in the user's timezone.
+- An Abstinence day may be marked bad immediately, including today.
+- A bad day contributes zero and remains distinct from a date that has not been reviewed.
+- A date cannot be both completed and bad.
+- Changing a bad day to completed or unmarked requires confirmation in the client.
 - Unmarking an existing completion is allowed in both modes.
 
 Example:
@@ -545,7 +549,7 @@ Instead, calendar days should be generated dynamically from:
 tracker.startDate → current date
 ```
 
-Only completed days should be stored in the database.
+Only explicit outcomes should be stored in the database: completed days in both modes and bad days in Abstinence mode. A generated date with neither record is not yet marked.
 
 For example, instead of storing:
 
@@ -566,7 +570,7 @@ August 15
 August 16
 ```
 
-Any generated date without a corresponding completion record is treated as incomplete.
+Any generated date without a corresponding completion or bad-day record is treated as unreviewed and incomplete.
 
 This approach reduces unnecessary database records and simplifies the data model.
 
@@ -594,6 +598,21 @@ Example:
   date: "2026-08-16"
 }
 ```
+
+## Bad Day Model
+
+The bad-day entity records an explicit Abstinence failure without adding to TheDays:
+
+```text
+BadDay
+
+id
+trackerId
+date
+createdAt
+```
+
+The combination of `trackerId + date` must be unique. Completed-day and bad-day records are mutually exclusive and transitions between them must run atomically.
 
 ---
 
@@ -632,9 +651,12 @@ Request body:
 
 ```json
 {
-  "date": "2026-08-16"
+  "date": "2026-08-16",
+  "replaceBad": true
 }
 ```
+
+`replaceBad` is optional for ordinary completions and must be `true` when replacing an existing bad-day record after client confirmation. Without it, the API returns `409 BAD_DAY_CONFIRMATION_REQUIRED`.
 
 The backend must verify:
 
@@ -647,6 +669,7 @@ The backend must verify:
    - Practice: the date is on or before today in the user's timezone (`startDate <= date <= today`).
    - Abstinence: the date is strictly before today in the user's timezone (`startDate <= date < today`).
 7. The date has not already been recorded as completed.
+8. If the date is marked bad, the request must explicitly confirm replacement. The backend then replaces the bad record atomically.
 
 If validation succeeds, a completed day record should be created.
 
@@ -662,7 +685,7 @@ Example endpoint:
 DELETE /api/trackers/:trackerId/completed-days/:date
 ```
 
-If the completion exists and belongs to the user's tracker, it should be removed.
+If the completion exists and belongs to the user's tracker, it should be removed. Removing or replacing a bad-day record is a separate confirmed interaction.
 
 The TheDays should immediately decrease by one.
 
@@ -711,7 +734,7 @@ Each date becomes available in the list automatically when it becomes the user's
 Today is always displayed.
 
 - On a Practice TheDays, today may be marked complete.
-- On an Abstinence TheDays, today is visible and disabled until the calendar day has ended. The primary daily action is the most recent finished day, usually yesterday.
+- On an Abstinence TheDays, today cannot be marked good until the calendar day has ended, but may be marked bad immediately. The latest finished day, usually yesterday, remains the primary good-day action.
 
 If an Abstinence TheDays has a start date of today, no date is completable until tomorrow. The interface should explain that the first day becomes available after it ends, rather than appearing empty or broken.
 
@@ -802,13 +825,13 @@ Previous
 ☐ Wednesday, August 12
 ```
 
-On an Abstinence TheDays, today's row remains visible and disabled while the day is in progress, for example:
+On an Abstinence TheDays, today's row keeps Good disabled while Bad remains available, for example:
 
 ```text
 Today
 
 ☐ Sunday, August 16
-Available after the day ends
+[ Good after day ends ] [ Mark as bad ]
 
 Previous
 
@@ -851,14 +874,14 @@ Completing the current day should require minimal interaction.
 
 ## Abstinence
 
-Today should remain visible and disabled while the calendar day is in progress.
+Today should remain visible while the calendar day is in progress. Its Good action is disabled, while its Bad action is immediately available.
 
 ```text
 TODAY
 
 Sunday, August 16
 
-Available after the day ends
+[ Good after day ends ] [ Mark as bad ]
 ```
 
 The primary daily control should be the most recent finished day, usually yesterday:
@@ -872,6 +895,8 @@ Saturday, August 15
 ```
 
 If yesterday is already completed, the control should show that completed state. If the tracker started today, there is no finished day yet; explain that the first completion becomes available after today ends.
+
+If today is marked bad, the interface should show that explicit state and allow the user to unmark it back to “In progress” after confirmation. A finished bad day may be changed to good only after confirmation. Changing a good day to bad is immediate.
 
 ---
 
@@ -1521,9 +1546,27 @@ Example response:
 ```json
 {
   "dates": ["2026-08-12", "2026-08-13", "2026-08-15", "2026-08-16"],
-  "total": 4
+  "total": 4,
+  "badDates": ["2026-08-14"],
+  "badTotal": 1
 }
 ```
+
+## Mark Day Bad
+
+```http
+POST /api/trackers/:trackerId/bad-days
+```
+
+Body: `{ "date": "2026-08-16" }`. This is valid only for Abstinence trackers from `startDate` through today in the user's timezone. If the date was completed, the backend atomically replaces the completion and recalculates landmark reachability.
+
+## Unmark Day Bad
+
+```http
+DELETE /api/trackers/:trackerId/bad-days/:date
+```
+
+The client must confirm before calling this endpoint. Removing a bad record returns the date to unreviewed; it does not mark the date good.
 
 ## Historical Backfill
 
@@ -1531,7 +1574,7 @@ Example response:
 POST /api/trackers/:trackerId/completed-days/check-all
 ```
 
-Marks every eligible date from the tracker start date through the latest eligible date. Practice includes today; Abstinence stops at yesterday. The range is capped at five years. Existing completions are retained, making the operation idempotent. The response is `{ "added": number, "total": number }`.
+Marks every unreviewed eligible date from the tracker start date through the latest eligible date. Practice includes today; Abstinence stops at yesterday. The range is capped at five years. Existing completions and bad dates are retained, making the operation idempotent. The response is `{ "added": number, "total": number, "preservedBad": number }`.
 
 ## Clear Completion History
 
@@ -1539,7 +1582,7 @@ Marks every eligible date from the tracker start date through the latest eligibl
 DELETE /api/trackers/:trackerId/completed-days
 ```
 
-Permanently removes every completed day and returns `{ "cleared": number, "total": 0 }`. The frontend must present this as a separate destructive action with confirmation.
+Permanently removes every completed day while preserving bad dates and returns `{ "cleared": number, "total": 0, "preservedBad": number }`. The frontend must present this as a separate destructive action with confirmation.
 
 ---
 
@@ -1947,6 +1990,7 @@ Deleting a tracker is a destructive action.
 Deleting a tracker should also delete:
 
 - All completed days belonging to the tracker.
+- All bad days belonging to the tracker.
 - All landmarks belonging to the tracker.
 
 The user should receive a confirmation dialog before deletion.
@@ -1965,7 +2009,7 @@ Database cascading deletes should be used where appropriate.
 
 # 57. Editing a Start Date
 
-Changing the start date can conflict with existing completion records.
+Changing the start date can conflict with existing completed-day or bad-day records.
 
 Example:
 
@@ -1981,7 +2025,7 @@ August 10
 
 If the user attempts to change the start date to August 7, the completed records for August 3 and August 5 would fall outside the tracker's valid range.
 
-For the MVP, the application should not allow a start date to be changed to a date later than the earliest completed day.
+For the MVP, the application should not allow a start date to be changed to a date later than the earliest completed or bad day.
 
 This avoids silently deleting or invalidating existing progress.
 

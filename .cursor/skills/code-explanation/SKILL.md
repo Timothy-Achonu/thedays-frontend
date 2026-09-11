@@ -5,7 +5,7 @@ description: Layered explanation structure for the TheDays web app. Use when exp
 
 When explaining code, creating plans, reviewing plans, or describing system behavior, follow this structure strictly.
 
-In this project, **TheDays** is the product/UI name for a cumulative habit tracker. Internally that entity is a **Tracker**. The UI generates the day list from `startDate` through today; the API only returns completed dates. Calendar dates are `YYYY-MM-DD` in the user’s timezone, not UTC timestamps. Auth is an HttpOnly cookie, not a token in `localStorage`.
+In this project, **TheDays** is the product/UI name for a cumulative habit tracker. Internally that entity is a **Tracker**. The UI generates the day list from `startDate` through today; the API returns completed dates plus explicit bad dates for Abstinence trackers. A date with neither is unreviewed. Calendar dates are `YYYY-MM-DD` in the user’s timezone, not UTC timestamps. Auth is an HttpOnly cookie, not a token in `localStorage`.
 
 1. Start from zero assumptions
    Assume the reader knows nothing about the concept, architecture, or workflow.

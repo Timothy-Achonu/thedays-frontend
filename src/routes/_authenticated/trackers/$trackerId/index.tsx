@@ -83,6 +83,7 @@ function TrackerDetailPage() {
 
   const hasCompletionData = Boolean(daysQuery.data)
   const completedDates = new Set(daysQuery.data?.dates ?? [])
+  const badDates = new Set(daysQuery.data?.badDates ?? [])
   const landmarks = landmarksQuery.data?.landmarks ?? []
 
   const submitLandmark = (payload: LandmarkFormPayload) => {
@@ -148,11 +149,20 @@ function TrackerDetailPage() {
         />
 
         {!hasCompletionData && daysQuery.isPending ? (
-          <div className="h-36 animate-pulse-soft rounded-3xl border border-earth-100 bg-white/70" aria-label="Completion controls loading" />
+          <div
+            className="h-36 animate-pulse-soft rounded-3xl border border-earth-100 bg-white/70"
+            aria-label="Completion controls loading"
+          />
         ) : !hasCompletionData && daysQuery.isError ? (
           <CompletionLoadError onRetry={() => void daysQuery.refetch()} />
         ) : (
-          <TodayCard tracker={tracker} completedDates={completedDates} today={today} onError={setDayError} />
+          <TodayCard
+            tracker={tracker}
+            completedDates={completedDates}
+            badDates={badDates}
+            today={today}
+            onError={setDayError}
+          />
         )}
 
         {hasCompletionData ? (
@@ -164,8 +174,12 @@ function TrackerDetailPage() {
         ) : null}
 
         {hasCompletionData && daysQuery.isError ? (
-          <p role="status" className="rounded-xl border border-sand-300 bg-sand-100 px-4 py-3 text-sm text-sand-900">
-            Completion history could not be refreshed. Showing the last loaded data.
+          <p
+            role="status"
+            className="rounded-xl border border-sand-300 bg-sand-100 px-4 py-3 text-sm text-sand-900"
+          >
+            Completion history could not be refreshed. Showing the last loaded
+            data.
           </p>
         ) : null}
 
@@ -266,11 +280,13 @@ function TrackerDetailPage() {
               <BulkDayActions
                 tracker={tracker}
                 completedDates={completedDates}
+                badDates={badDates}
                 today={today}
               />
               <DayList
                 tracker={tracker}
                 completedDates={completedDates}
+                badDates={badDates}
                 today={today}
                 onError={setDayError}
               />
@@ -338,10 +354,23 @@ function TrackerDetailPage() {
 
 function CompletionLoadError({ onRetry }: { onRetry: () => void }) {
   return (
-    <section aria-disabled="true" className="rounded-3xl border border-error-200 bg-error-50 p-7 text-center">
-      <p className="font-display text-xl font-semibold text-earth-900">Completion controls are unavailable.</p>
-      <p className="mt-2 text-sm text-error-700">Load the authoritative completion history before changing any day.</p>
-      <button type="button" onClick={onRetry} className="mt-4 rounded-xl border border-error-300 bg-white px-4 py-2 text-sm font-semibold text-error-700 focus-ring">Try again</button>
+    <section
+      aria-disabled="true"
+      className="rounded-3xl border border-error-200 bg-error-50 p-7 text-center"
+    >
+      <p className="font-display text-xl font-semibold text-earth-900">
+        Completion controls are unavailable.
+      </p>
+      <p className="mt-2 text-sm text-error-700">
+        Load the authoritative completion history before changing any day.
+      </p>
+      <button
+        type="button"
+        onClick={onRetry}
+        className="mt-4 rounded-xl border border-error-300 bg-white px-4 py-2 text-sm font-semibold text-error-700 focus-ring"
+      >
+        Try again
+      </button>
     </section>
   )
 }

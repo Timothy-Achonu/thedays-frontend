@@ -19,6 +19,7 @@ function renderDayList(
   overrides: Partial<Tracker>,
   completed: ReadonlySet<string>,
   today = '2026-08-24',
+  bad = new Set<string>(),
 ) {
   const queryClient = new QueryClient()
   return render(
@@ -26,6 +27,7 @@ function renderDayList(
       <DayList
         tracker={{ ...tracker, ...overrides }}
         completedDates={completed}
+        badDates={bad}
         today={today}
         onError={vi.fn()}
       />
@@ -36,17 +38,55 @@ function renderDayList(
 describe('DayList accessible controls', () => {
   it('names incomplete, completed, and unavailable days by their actual action', () => {
     renderDayList({}, new Set(['2026-08-23']))
-    expect(screen.getByRole('checkbox', { name: /^Mark .*24.* as completed$/i })).toBeEnabled()
-    expect(screen.getByRole('checkbox', { name: /^Unmark .*23.* as completed$/i })).toBeEnabled()
+    expect(
+      screen.getByRole('checkbox', { name: /^Mark .*24.* as completed$/i }),
+    ).toBeEnabled()
+    expect(
+      screen.getByRole('checkbox', { name: /^Unmark .*23.* as completed$/i }),
+    ).toBeEnabled()
 
-    renderDayList({ completionMode: 'abstinence', startDate: '2026-08-24' }, new Set())
-    expect(screen.getByRole('checkbox', { name: /unavailable until the day ends/i })).toBeDisabled()
+    renderDayList(
+      { completionMode: 'abstinence', startDate: '2026-08-24' },
+      new Set(),
+    )
+    expect(
+      screen.getByRole('button', {
+        name: /can be marked good after the day ends/i,
+      }),
+    ).toBeDisabled()
   })
 
   it('renders only the visible batch for a very old tracker', () => {
     renderDayList({ startDate: '1000-01-01' }, new Set())
     expect(screen.getAllByRole('checkbox')).toHaveLength(30)
     expect(screen.getByText(/more/)).toBeInTheDocument()
+  })
+
+  it('lets an abstinence day be marked bad today while good stays disabled', () => {
+    renderDayList({ completionMode: 'abstinence' }, new Set(), '2026-08-24')
+
+    expect(
+      screen.getByRole('button', {
+        name: /can be marked good after the day ends/i,
+      }),
+    ).toBeDisabled()
+    expect(
+      screen.getByRole('button', { name: /mark .*24.* as bad/i }),
+    ).toBeEnabled()
+  })
+
+  it('shows an explicit bad state', () => {
+    renderDayList(
+      { completionMode: 'abstinence' },
+      new Set(),
+      '2026-08-24',
+      new Set(['2026-08-23']),
+    )
+
+    expect(screen.getByText('Marked bad')).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /unmark .*23.* as bad/i }),
+    ).toHaveAttribute('aria-pressed', 'true')
   })
 
   it('decorates a closed month when every calendar day was completed', () => {
@@ -61,7 +101,9 @@ describe('DayList accessible controls', () => {
       '2026-08-01',
     )
 
-    expect(screen.getByRole('img', { name: 'Perfect month' })).toBeInTheDocument()
+    expect(
+      screen.getByRole('img', { name: 'Perfect month' }),
+    ).toBeInTheDocument()
     expect(screen.getByText('Perfect month')).toBeInTheDocument()
   })
 
@@ -78,7 +120,9 @@ describe('DayList accessible controls', () => {
       '2026-08-02',
     )
 
-    expect(screen.queryByRole('img', { name: 'Perfect month' })).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('img', { name: 'Perfect month' }),
+    ).not.toBeInTheDocument()
     expect(screen.queryByText('Perfect month')).not.toBeInTheDocument()
   })
 })

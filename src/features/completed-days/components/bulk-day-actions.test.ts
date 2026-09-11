@@ -47,12 +47,14 @@ describe('historical backfill totals', () => {
     const progress = getEligibleProgress(
       { completionMode: 'abstinence', startDate: '2026-08-01' },
       new Set(['2026-07-31', '2026-08-01', '2026-08-10', '2026-08-24']),
+      new Set(['2026-08-05']),
       '2026-08-24',
     )
     expect(progress).toEqual({
       lastEligibleBoundary: '2026-08-23',
       eligibleTotal: 23,
       completedEligibleCount: 2,
+      badEligibleCount: 1,
     })
   })
 })
@@ -63,9 +65,7 @@ describe('historical backfill guidance', () => {
     renderBulkDayActions()
 
     expect(
-      screen.getByText(
-        'Save time when most days qualify: mark them all, then uncheck any missed days below.',
-      ),
+      screen.getByText(/Mark every unreviewed eligible day good at once/i),
     ).toBeInTheDocument()
 
     await user.click(
@@ -73,48 +73,44 @@ describe('historical backfill guidance', () => {
     )
 
     expect(
-      screen.getByText(
-        'This marks every currently unchecked eligible date as completed.',
-      ),
+      screen.getByText(/preserves dates already marked bad/i),
     ).toBeInTheDocument()
     expect(
-      screen.getByText(
-        /review Day history and uncheck any days you missed/i,
-      ),
+      screen.getByText(/Existing bad records are never overwritten/i),
     ).toBeInTheDocument()
   })
 
   it.each([
     {
-      result: { added: 20, total: 22 },
+      result: { added: 19, total: 21, preservedBad: 1 },
       feedback:
-        '20 days checked. 22 days completed in total. Review Day history and uncheck any missed days.',
+        '19 days marked good. 21 days completed in total. 1 day marked bad was preserved.',
     },
     {
-      result: { added: 0, total: 22 },
+      result: { added: 0, total: 2, preservedBad: 1 },
       feedback:
-        'All 22 eligible days are already checked. Review Day history and uncheck any missed days.',
+        'There were no unreviewed eligible days to mark good. 1 day marked bad was preserved.',
     },
-  ])('includes the review reminder after checking days', async ({
-    result,
-    feedback,
-  }) => {
-    const user = userEvent.setup()
-    checkAllMutate.mockImplementationOnce(
-      (
-        _trackerId: string,
-        options: { onSuccess: (value: typeof result) => void },
-      ) => options.onSuccess(result),
-    )
-    renderBulkDayActions()
+  ])(
+    'includes the review reminder after checking days',
+    async ({ result, feedback }) => {
+      const user = userEvent.setup()
+      checkAllMutate.mockImplementationOnce(
+        (
+          _trackerId: string,
+          options: { onSuccess: (value: typeof result) => void },
+        ) => options.onSuccess(result),
+      )
+      renderBulkDayActions()
 
-    await user.click(
-      screen.getByRole('button', { name: 'Mark all eligible dates' }),
-    )
-    await user.click(screen.getByRole('button', { name: 'Check 20 days' }))
+      await user.click(
+        screen.getByRole('button', { name: 'Mark all eligible dates' }),
+      )
+      await user.click(screen.getByRole('button', { name: 'Check 19 days' }))
 
-    expect(screen.getByRole('status')).toHaveTextContent(feedback)
-  })
+      expect(screen.getByRole('status')).toHaveTextContent(feedback)
+    },
+  )
 })
 
 function renderBulkDayActions() {
@@ -122,6 +118,7 @@ function renderBulkDayActions() {
     createElement(BulkDayActions, {
       tracker,
       completedDates: new Set(['2026-08-03', '2026-08-04']),
+      badDates: new Set(['2026-08-05']),
       today: '2026-08-24',
     }),
   )

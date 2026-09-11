@@ -16,6 +16,7 @@ const statusToneStyles: Record<DailyStatusTone, string> = {
   sage: 'text-sage-700 bg-sage-100/80 ring-sage-200',
   earth: 'text-earth-600 bg-earth-100/70 ring-earth-200',
   sand: 'text-sand-800 bg-sand-100/90 ring-sand-300',
+  error: 'text-error-700 bg-error-50 ring-error-200',
 }
 
 export function TrackerCard({
@@ -88,20 +89,20 @@ export function TrackerCard({
           <p className="rounded-lg bg-error-50 px-2.5 py-1.5 text-xs font-semibold text-error-700 ring-1 ring-inset ring-error-200">
             Daily status unavailable
           </p>
-        ) : status
-          ? status.lines.map((line) => (
-              <p
-                key={line.label}
-                className={cn(
-                  'flex items-center justify-between rounded-lg px-2.5 py-1.5 text-xs font-medium ring-1 ring-inset',
-                  statusToneStyles[line.tone],
-                )}
-              >
-                <span>{line.label}</span>
-                <span className="font-semibold">{line.value}</span>
-              </p>
-            ))
-          : null}
+        ) : status ? (
+          status.lines.map((line) => (
+            <p
+              key={line.label}
+              className={cn(
+                'flex items-center justify-between rounded-lg px-2.5 py-1.5 text-xs font-medium ring-1 ring-inset',
+                statusToneStyles[line.tone],
+              )}
+            >
+              <span>{line.label}</span>
+              <span className="font-semibold">{line.value}</span>
+            </p>
+          ))
+        ) : null}
 
         <p className="px-0.5 pt-1 text-xs text-earth-400">
           Started {formatDateString(tracker.startDate, 'long')}
