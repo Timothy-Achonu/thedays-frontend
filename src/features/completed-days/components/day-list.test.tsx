@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { DayList } from './day-list'
 import type { Tracker } from '@/types/trackers'
@@ -36,7 +37,8 @@ function renderDayList(
 }
 
 describe('DayList accessible controls', () => {
-  it('names incomplete, completed, and unavailable days by their actual action', () => {
+  it('names Practice actions and opens unavailable Abstinence days precisely', async () => {
+    const user = userEvent.setup()
     renderDayList({}, new Set(['2026-08-23']))
     expect(
       screen.getByRole('checkbox', { name: /^Mark .*24.* as completed$/i }),
@@ -49,11 +51,12 @@ describe('DayList accessible controls', () => {
       { completionMode: 'abstinence', startDate: '2026-08-24' },
       new Set(),
     )
-    expect(
+    await user.click(
       screen.getByRole('button', {
-        name: /can be marked good after the day ends/i,
+        name: /open .*24.* entry, in progress/i,
       }),
-    ).toBeDisabled()
+    )
+    expect(screen.getByRole('button', { name: /^On track/ })).toBeDisabled()
   })
 
   it('renders only the visible batch for a very old tracker', () => {
@@ -62,20 +65,22 @@ describe('DayList accessible controls', () => {
     expect(screen.getByText(/more/)).toBeInTheDocument()
   })
 
-  it('lets an abstinence day be marked bad today while good stays disabled', () => {
+  it('offers a setback today only after opening the day', async () => {
+    const user = userEvent.setup()
     renderDayList({ completionMode: 'abstinence' }, new Set(), '2026-08-24')
 
-    expect(
+    expect(screen.queryByText('Setback')).not.toBeInTheDocument()
+    await user.click(
       screen.getByRole('button', {
-        name: /can be marked good after the day ends/i,
+        name: /open .*24.* entry, in progress/i,
       }),
-    ).toBeDisabled()
-    expect(
-      screen.getByRole('button', { name: /mark .*24.* as bad/i }),
-    ).toBeEnabled()
+    )
+    expect(screen.getByRole('button', { name: /^On track/ })).toBeDisabled()
+    expect(screen.getByRole('button', { name: /^Setback/ })).toBeEnabled()
   })
 
-  it('shows an explicit bad state', () => {
+  it('shows a neutral reviewed state until a setback day is opened', async () => {
+    const user = userEvent.setup()
     renderDayList(
       { completionMode: 'abstinence' },
       new Set(),
@@ -83,10 +88,19 @@ describe('DayList accessible controls', () => {
       new Set(['2026-08-23']),
     )
 
-    expect(screen.getByText('Marked bad')).toBeInTheDocument()
-    expect(
-      screen.getByRole('button', { name: /unmark .*23.* as bad/i }),
-    ).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.queryByText('Marked bad')).not.toBeInTheDocument()
+    expect(screen.queryByText('Setback')).not.toBeInTheDocument()
+    expect(screen.getByText('Reviewed')).toBeInTheDocument()
+
+    await user.click(
+      screen.getByRole('button', {
+        name: /open .*23.* entry, setback recorded/i,
+      }),
+    )
+    expect(screen.getByRole('button', { name: /^Setback/ })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
   })
 
   it('decorates a closed month when every calendar day was completed', () => {

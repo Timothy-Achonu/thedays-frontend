@@ -825,13 +825,16 @@ Previous
 ☐ Wednesday, August 12
 ```
 
-On an Abstinence TheDays, today's row keeps Good disabled while Bad remains available, for example:
+On an Abstinence TheDays, the history is a quiet timeline rather than a row of
+binary controls. Each date is one button that opens the day editor. Visible
+copy uses only `Reviewed`, `Ready to review`, or `In progress`; restrained
+markers may distinguish outcomes without displaying judgment labels.
 
 ```text
 Today
 
 ☐ Sunday, August 16
-[ Good after day ends ] [ Mark as bad ]
+In progress                              [ Open entry ]
 
 Previous
 
@@ -874,14 +877,17 @@ Completing the current day should require minimal interaction.
 
 ## Abstinence
 
-Today should remain visible while the calendar day is in progress. Its Good action is disabled, while its Bad action is immediately available.
+Today should remain visible while the calendar day is in progress. The tracker
+surface shows a neutral `In progress` or `Entry saved` summary. Opening the day
+launches the responsive day editor, where `On track` is disabled until the
+calendar day ends and `Setback` is immediately available.
 
 ```text
 TODAY
 
 Sunday, August 16
 
-[ Good after day ends ] [ Mark as bad ]
+In progress                              [ Open entry ]
 ```
 
 The primary daily control should be the most recent finished day, usually yesterday:
@@ -891,12 +897,19 @@ YESTERDAY
 
 Saturday, August 15
 
-[ Mark as completed ]
+Ready to review                          [ Review ]
 ```
 
-If yesterday is already completed, the control should show that completed state. If the tracker started today, there is no finished day yet; explain that the first completion becomes available after today ends.
+If yesterday has already been reviewed, the surface should say `Reviewed`
+without exposing the exact outcome. If the tracker started today, there is no
+finished day yet; explain that the first review becomes available after today
+ends.
 
-If today is marked bad, the interface should show that explicit state and allow the user to unmark it back to “In progress” after confirmation. A finished bad day may be changed to good only after confirmation. Changing a good day to bad is immediate.
+If today has a setback entry, the surface should say `Entry saved`. The editor
+shows the precise status and allows it to be cleared back to `In progress` after
+confirmation. A finished setback may be changed to `On track` only after
+confirmation. Changing `On track` to `Setback` is immediate. These labels are a
+presentation layer over the existing completed-day and bad-day API models.
 
 ---
 
@@ -924,7 +937,7 @@ Each tracker card on `/trackers` should include:
 - Completion mode.
 - Current TheDays.
 - Start date.
-- Daily completion status for the mode (today on Practice; today in progress plus yesterday / latest finished day on Abstinence).
+- Daily completion status for Practice; a privacy-conscious review prompt for Abstinence.
 - Next landmark, if applicable.
 - Remaining completed days required to reach the next landmark.
 
@@ -953,17 +966,19 @@ Abstinence
 
 12 days
 
-Today:
-In progress
-
-Yesterday:
-☐ Not yet marked
+Check-in:
+Ready to review
 
 Next Landmark:
 30 days
 
 18 days remaining
 ```
+
+Abstinence tracker cards must not reveal whether a reviewed day was on track or
+a setback. They show `Ready to review`, `Up to date`, or
+`First review tomorrow`. Exact outcomes are available only after opening the
+tracker and selecting a date.
 
 Selecting a tracker should open its detail page.
 
@@ -2155,7 +2170,7 @@ The `/trackers` page owns the rich TheDays card list. Each card should display a
 Title
 Completion mode
 Current TheDays
-Daily completion status for that mode
+Daily completion status for Practice, or a private review prompt for Abstinence
 Next landmark
 ```
 
@@ -2183,11 +2198,8 @@ Abstinence
 
 12 days
 
-Today:
-In progress
-
-Yesterday:
-☐ Not yet marked
+Check-in:
+Ready to review
 
 Next:
 30 days

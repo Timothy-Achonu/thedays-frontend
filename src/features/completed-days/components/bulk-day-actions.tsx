@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useIsMutating } from '@tanstack/react-query'
+import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
 import type { Tracker } from '@/types/trackers'
 import { AppDialog, Button } from '@/components/ui'
 import {
@@ -48,6 +49,7 @@ export function BulkDayActions({
   const uncheckedEligibleCount =
     eligibleTotal - completedEligibleCount - badEligibleCount
   const completedCount = completedDates.size
+  const isAbstinence = tracker.completionMode === 'abstinence'
   const isCheckPending = checkAllMutation.isPending
   const isClearPending = clearAllMutation.isPending
   const isAnyCompletionPending = pendingCompletionMutations > 0
@@ -69,18 +71,27 @@ export function BulkDayActions({
     setAction(null)
   }
 
+  const preservedEntryCopy = (preservedCount: number) => {
+    if (preservedCount === 0) return ''
+    if (isAbstinence) {
+      return ` ${formatDayCount(preservedCount)} recorded as ${preservedCount === 1 ? 'a setback was' : 'setbacks were'} preserved.`
+    }
+    return ` ${formatDayCount(preservedCount)} marked bad ${preservedCount === 1 ? 'was' : 'were'} preserved.`
+  }
+
   const confirmCheckAll = () => {
     setDialogError(null)
     checkAllMutation.mutate(tracker.id, {
       onSuccess: ({ added, total, preservedBad }) => {
-        const preservedCopy =
-          preservedBad > 0
-            ? ` ${formatDayCount(preservedBad)} marked bad ${preservedBad === 1 ? 'was' : 'were'} preserved.`
-            : ''
+        const preservedCopy = preservedEntryCopy(preservedBad)
         setFeedback(
-          added === 0
-            ? `There were no unreviewed eligible days to mark good.${preservedCopy}`
-            : `${formatDayCount(added)} marked good. ${formatDayCount(total)} completed in total.${preservedCopy}`,
+          isAbstinence
+            ? added === 0
+              ? `There were no unreviewed days to mark on track.${preservedCopy}`
+              : `${formatDayCount(added)} marked on track. ${formatDayCount(total)} count toward TheDays.${preservedCopy}`
+            : added === 0
+              ? `There were no unreviewed eligible days to mark good.${preservedCopy}`
+              : `${formatDayCount(added)} marked good. ${formatDayCount(total)} completed in total.${preservedCopy}`,
         )
         setAction(null)
       },
@@ -92,14 +103,15 @@ export function BulkDayActions({
     setDialogError(null)
     clearAllMutation.mutate(tracker.id, {
       onSuccess: ({ cleared, preservedBad }) => {
-        const preservedCopy =
-          preservedBad > 0
-            ? ` ${formatDayCount(preservedBad)} marked bad ${preservedBad === 1 ? 'was' : 'were'} preserved.`
-            : ''
+        const preservedCopy = preservedEntryCopy(preservedBad)
         setFeedback(
-          cleared === 0
-            ? `There were no completed days to uncheck.${preservedCopy}`
-            : `${formatDayCount(cleared)} unchecked.${preservedCopy}`,
+          isAbstinence
+            ? cleared === 0
+              ? `There were no on-track entries to clear.${preservedCopy}`
+              : `${formatDayCount(cleared)} cleared.${preservedCopy}`
+            : cleared === 0
+              ? `There were no completed days to uncheck.${preservedCopy}`
+              : `${formatDayCount(cleared)} unchecked.${preservedCopy}`,
         )
         setAction(null)
       },
@@ -109,74 +121,48 @@ export function BulkDayActions({
 
   return (
     <>
-      <div className="relative overflow-hidden rounded-2xl border border-earth-200 bg-white px-4 py-4 shadow-organic-sm sm:px-5">
-        <div
-          aria-hidden="true"
-          className="absolute -right-10 -top-12 size-32 rounded-full bg-sage-100/70 blur-2xl"
+      {isAbstinence ? (
+        <AbstinenceHistoryMenu
+          canCheck={uncheckedEligibleCount > 0 && !isAnyCompletionPending}
+          canClear={completedCount > 0 && !isAnyCompletionPending}
+          onCheck={() => openAction('check')}
+          onClear={() => openAction('uncheck')}
         />
+      ) : (
+        <PracticeBulkPanel
+          eligibleTotal={eligibleTotal}
+          completedEligibleCount={completedEligibleCount}
+          canCheck={uncheckedEligibleCount > 0 && !isAnyCompletionPending}
+          canClear={completedCount > 0 && !isAnyCompletionPending}
+          onCheck={() => openAction('check')}
+          onClear={() => openAction('uncheck')}
+          feedback={feedback}
+        />
+      )}
 
-        <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <span
-                aria-hidden="true"
-                className="size-2 rounded-full bg-sage-500 shadow-[0_0_0_4px_rgba(168,195,176,0.25)]"
-              />
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-earth-500">
-                Historical backfill
-              </p>
-            </div>
-            <p className="mt-2 font-display text-lg font-semibold text-earth-900">
-              {eligibleTotal === 0
-                ? 'No finished days available yet'
-                : `${completedEligibleCount.toLocaleString()} of ${eligibleTotal.toLocaleString()} eligible days completed`}
-            </p>
-            <p className="mt-1 max-w-lg text-sm leading-5 text-earth-500">
-              Mark every unreviewed eligible day good at once. Dates already
-              marked bad stay untouched.
-            </p>
-          </div>
-
-          <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
-            <Button
-              variant="secondary"
-              size="sm"
-              leftIcon={<CheckAllIcon />}
-              className="w-full sm:w-auto"
-              disabled={uncheckedEligibleCount === 0 || isAnyCompletionPending}
-              onClick={() => openAction('check')}
-            >
-              Mark all eligible dates
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              leftIcon={<UncheckAllIcon />}
-              className="w-full text-error-600 hover:bg-error-50 hover:text-error-700 sm:w-auto"
-              disabled={completedCount === 0 || isAnyCompletionPending}
-              onClick={() => openAction('uncheck')}
-            >
-              Clear completion history
-            </Button>
-          </div>
-        </div>
-
-        {feedback ? (
-          <p
-            role="status"
-            aria-live="polite"
-            className="relative mt-4 border-t border-earth-100 pt-3 text-sm font-medium text-sage-700"
-          >
-            {feedback}
-          </p>
-        ) : null}
-      </div>
+      {isAbstinence && feedback ? (
+        <p
+          role="status"
+          aria-live="polite"
+          className="mt-3 text-sm font-medium text-sage-700"
+        >
+          {feedback}
+        </p>
+      ) : null}
 
       <AppDialog
         open={action === 'check'}
         onClose={closeDialog}
-        title={`Mark ${formatDayCount(actionCount)} as completed?`}
-        description="This marks every unreviewed eligible date as good and preserves dates already marked bad."
+        title={
+          isAbstinence
+            ? `Mark ${formatDayCount(actionCount)} on track?`
+            : `Mark ${formatDayCount(actionCount)} as completed?`
+        }
+        description={
+          isAbstinence
+            ? 'This updates every eligible unreviewed date. Existing setback entries remain unchanged.'
+            : 'This marks every unreviewed eligible date as good and preserves dates already marked bad.'
+        }
         size="sm"
         footer={
           <div className="flex flex-wrap justify-end gap-3">
@@ -193,8 +179,10 @@ export function BulkDayActions({
               isLoading={isCheckPending}
             >
               {isCheckPending
-                ? 'Checking days…'
-                : `Check ${formatDayCount(actionCount)}`}
+                ? 'Saving days…'
+                : isAbstinence
+                  ? `Mark ${formatDayCount(actionCount)}`
+                  : `Check ${formatDayCount(actionCount)}`}
             </Button>
           </div>
         }
@@ -212,14 +200,15 @@ export function BulkDayActions({
         ) : null}
 
         <p className="mt-3 text-sm leading-6 text-earth-600">
-          Your completion total and landmark progress update only for the new
-          good days. Existing bad records are never overwritten by this action.
+          {isAbstinence
+            ? 'Your total and landmark progress update only for newly on-track days. Existing setback entries are never overwritten.'
+            : 'Your completion total and landmark progress update only for the new good days. Existing bad records are never overwritten by this action.'}
         </p>
 
-        {tracker.completionMode === 'abstinence' ? (
+        {isAbstinence ? (
           <p className="mt-3 rounded-xl border border-sand-300 bg-sand-100 px-4 py-3 text-sm leading-5 text-sand-900">
-            Today stays unchecked because an Abstinence day only becomes
-            available after it ends.
+            Today stays in progress. It can only be marked on track after the
+            calendar day ends.
           </p>
         ) : null}
 
@@ -230,7 +219,11 @@ export function BulkDayActions({
         open={action === 'uncheck'}
         onClose={closeDialog}
         title={`Clear all ${formatDayCount(actionCount)}?`}
-        description="Every good completion in this tracker will be removed, including dates not currently loaded below. Bad dates remain recorded."
+        description={
+          isAbstinence
+            ? 'Every on-track entry will be removed, including dates not currently loaded. Setback entries remain recorded.'
+            : 'Every good completion in this tracker will be removed, including dates not currently loaded below. Bad dates remain recorded.'
+        }
         size="sm"
         footer={
           <div className="flex flex-wrap justify-end gap-3">
@@ -239,7 +232,7 @@ export function BulkDayActions({
               onClick={closeDialog}
               disabled={isClearPending}
             >
-              Keep checked
+              {isAbstinence ? 'Keep entries' : 'Keep checked'}
             </Button>
             <Button
               variant="danger"
@@ -247,24 +240,159 @@ export function BulkDayActions({
               isLoading={isClearPending}
             >
               {isClearPending
-                ? 'Unchecking days…'
-                : `Uncheck ${formatDayCount(actionCount)}`}
+                ? isAbstinence
+                  ? 'Clearing days…'
+                  : 'Unchecking days…'
+                : isAbstinence
+                  ? `Clear ${formatDayCount(actionCount)}`
+                  : `Uncheck ${formatDayCount(actionCount)}`}
             </Button>
           </div>
         }
       >
         <div className="rounded-xl border border-error-200 bg-error-50 px-4 py-3 text-sm leading-6 text-error-700">
-          Your tracker, landmarks, and bad-day history remain, but completion
-          totals and landmark progress will be recalculated from zero.
+          {isAbstinence
+            ? 'Your tracker, landmarks, and setback history remain, but totals and landmark progress will be recalculated from zero.'
+            : 'Your tracker, landmarks, and bad-day history remain, but completion totals and landmark progress will be recalculated from zero.'}
         </div>
 
         <p className="mt-3 text-sm leading-6 text-earth-600">
-          You can check individual days again later.
+          {isAbstinence
+            ? 'You can review individual days again later.'
+            : 'You can check individual days again later.'}
         </p>
 
         <DialogError message={dialogError} />
       </AppDialog>
     </>
+  )
+}
+
+function AbstinenceHistoryMenu({
+  canCheck,
+  canClear,
+  onCheck,
+  onClear,
+}: {
+  canCheck: boolean
+  canClear: boolean
+  onCheck: () => void
+  onClear: () => void
+}) {
+  return (
+    <Menu as="div" className="relative">
+      <MenuButton className="inline-flex items-center gap-2 rounded-xl border border-earth-200 bg-white/75 px-3 py-2 text-sm font-semibold text-earth-600 shadow-xs transition-colors hover:border-earth-300 hover:bg-white focus-ring">
+        <DotsIcon />
+        History tools
+      </MenuButton>
+      <MenuItems
+        transition
+        className="absolute right-0 top-full z-40 mt-2 w-64 origin-top-right rounded-2xl border border-earth-200 bg-white p-1.5 shadow-organic-lg outline-none transition duration-150 data-[closed]:scale-95 data-[closed]:opacity-0"
+      >
+        <MenuItem>
+          <button
+            type="button"
+            disabled={!canCheck}
+            onClick={onCheck}
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-earth-700 transition-colors hover:bg-earth-50 focus:bg-earth-50 focus:outline-none disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <CheckAllIcon />
+            Mark unreviewed days on track
+          </button>
+        </MenuItem>
+        <MenuItem>
+          <button
+            type="button"
+            disabled={!canClear}
+            onClick={onClear}
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-earth-700 transition-colors hover:bg-earth-50 focus:bg-earth-50 focus:outline-none disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <UncheckAllIcon />
+            Clear on-track entries
+          </button>
+        </MenuItem>
+      </MenuItems>
+    </Menu>
+  )
+}
+
+function PracticeBulkPanel({
+  eligibleTotal,
+  completedEligibleCount,
+  canCheck,
+  canClear,
+  onCheck,
+  onClear,
+  feedback,
+}: {
+  eligibleTotal: number
+  completedEligibleCount: number
+  canCheck: boolean
+  canClear: boolean
+  onCheck: () => void
+  onClear: () => void
+  feedback: string | null
+}) {
+  return (
+    <div className="relative overflow-hidden rounded-2xl border border-earth-200 bg-white px-4 py-4 shadow-organic-sm sm:px-5">
+      <div
+        aria-hidden="true"
+        className="absolute -right-10 -top-12 size-32 rounded-full bg-sage-100/70 blur-2xl"
+      />
+      <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <span
+              aria-hidden="true"
+              className="size-2 rounded-full bg-sage-500 shadow-[0_0_0_4px_rgba(168,195,176,0.25)]"
+            />
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-earth-500">
+              Historical backfill
+            </p>
+          </div>
+          <p className="mt-2 font-display text-lg font-semibold text-earth-900">
+            {eligibleTotal === 0
+              ? 'No finished days available yet'
+              : `${completedEligibleCount.toLocaleString()} of ${eligibleTotal.toLocaleString()} eligible days completed`}
+          </p>
+          <p className="mt-1 max-w-lg text-sm leading-5 text-earth-500">
+            Mark every unreviewed eligible day good at once. Dates already
+            marked bad stay untouched.
+          </p>
+        </div>
+        <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
+          <Button
+            variant="secondary"
+            size="sm"
+            leftIcon={<CheckAllIcon />}
+            className="w-full sm:w-auto"
+            disabled={!canCheck}
+            onClick={onCheck}
+          >
+            Mark all eligible dates
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            leftIcon={<UncheckAllIcon />}
+            className="w-full text-error-600 hover:bg-error-50 hover:text-error-700 sm:w-auto"
+            disabled={!canClear}
+            onClick={onClear}
+          >
+            Clear completion history
+          </Button>
+        </div>
+      </div>
+      {feedback ? (
+        <p
+          role="status"
+          aria-live="polite"
+          className="relative mt-4 border-t border-earth-100 pt-3 text-sm font-medium text-sage-700"
+        >
+          {feedback}
+        </p>
+      ) : null}
+    </div>
   )
 }
 
@@ -330,6 +458,21 @@ function getBulkActionError(
 
 function formatDayCount(count: number): string {
   return `${count.toLocaleString()} ${count === 1 ? 'day' : 'days'}`
+}
+
+function DotsIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      className="size-4"
+      aria-hidden="true"
+    >
+      <circle cx="5" cy="12" r="1.5" />
+      <circle cx="12" cy="12" r="1.5" />
+      <circle cx="19" cy="12" r="1.5" />
+    </svg>
+  )
 }
 
 function CheckAllIcon() {

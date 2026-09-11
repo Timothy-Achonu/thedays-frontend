@@ -99,26 +99,25 @@ export function getTrackerDailyStatus(
     }
   }
 
-  const lines: TrackerDailyStatus['lines'] = [
-    badDates.has(today)
-      ? { label: 'Today', value: 'Marked bad', tone: 'error' }
-      : { label: 'Today', value: 'In progress', tone: 'sand' },
-  ]
-
   const latestFinishedDay = addDaysToDate(today, -1)
-  if (latestFinishedDay >= tracker.startDate) {
-    const yesterdayCompleted = completedDates.has(latestFinishedDay)
-    const yesterdayBad = badDates.has(latestFinishedDay)
-    lines.push({
-      label: 'Yesterday',
-      value: yesterdayCompleted
-        ? COMPLETED_LABEL
-        : yesterdayBad
-          ? 'Marked bad'
-          : NOT_MARKED_LABEL,
-      tone: yesterdayCompleted ? 'sage' : yesterdayBad ? 'error' : 'earth',
-    })
+  if (latestFinishedDay < tracker.startDate) {
+    return {
+      lines: [
+        { label: 'Check-in', value: 'First review tomorrow', tone: 'earth' },
+      ],
+    }
   }
 
-  return { lines }
+  const latestDayReviewed =
+    completedDates.has(latestFinishedDay) || badDates.has(latestFinishedDay)
+
+  return {
+    lines: [
+      {
+        label: 'Check-in',
+        value: latestDayReviewed ? 'Up to date' : 'Ready to review',
+        tone: latestDayReviewed ? 'earth' : 'sand',
+      },
+    ],
+  }
 }

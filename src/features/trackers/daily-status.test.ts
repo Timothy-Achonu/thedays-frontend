@@ -8,7 +8,7 @@ describe('Abstinence daily status', () => {
     ).toBe('bad')
   })
 
-  it('shows bad today and yesterday on tracker summaries', () => {
+  it('keeps exact Abstinence outcomes private on tracker summaries', () => {
     const status = getTrackerDailyStatus(
       { completionMode: 'abstinence', startDate: '2026-08-01' },
       new Set(),
@@ -17,8 +17,20 @@ describe('Abstinence daily status', () => {
     )
 
     expect(status.lines).toEqual([
-      { label: 'Today', value: 'Marked bad', tone: 'error' },
-      { label: 'Yesterday', value: 'Marked bad', tone: 'error' },
+      { label: 'Check-in', value: 'Up to date', tone: 'earth' },
+    ])
+  })
+
+  it('prompts for an unreviewed finished day without exposing today', () => {
+    const status = getTrackerDailyStatus(
+      { completionMode: 'abstinence', startDate: '2026-08-01' },
+      new Set(),
+      new Set(),
+      '2026-08-24',
+    )
+
+    expect(status.lines).toEqual([
+      { label: 'Check-in', value: 'Ready to review', tone: 'sand' },
     ])
   })
 })

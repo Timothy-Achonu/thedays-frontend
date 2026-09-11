@@ -261,9 +261,19 @@ function TrackerDetailPage() {
         </section>
 
         <section aria-label="Day history" className="space-y-4">
-          <h2 className="font-display text-2xl font-semibold text-earth-900">
-            Day history
-          </h2>
+          <header className="flex items-center justify-between gap-4">
+            <h2 className="font-display text-2xl font-semibold text-earth-900">
+              Day history
+            </h2>
+            {hasCompletionData && tracker.completionMode === 'abstinence' ? (
+              <BulkDayActions
+                tracker={tracker}
+                completedDates={completedDates}
+                badDates={badDates}
+                today={today}
+              />
+            ) : null}
+          </header>
 
           {!hasCompletionData && daysQuery.isPending ? (
             <div className="animate-pulse-soft space-y-2" aria-hidden="true">
@@ -277,12 +287,14 @@ function TrackerDetailPage() {
             </div>
           ) : hasCompletionData ? (
             <>
-              <BulkDayActions
-                tracker={tracker}
-                completedDates={completedDates}
-                badDates={badDates}
-                today={today}
-              />
+              {tracker.completionMode === 'practice' ? (
+                <BulkDayActions
+                  tracker={tracker}
+                  completedDates={completedDates}
+                  badDates={badDates}
+                  today={today}
+                />
+              ) : null}
               <DayList
                 tracker={tracker}
                 completedDates={completedDates}

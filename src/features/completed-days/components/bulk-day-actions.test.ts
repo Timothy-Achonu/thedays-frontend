@@ -111,12 +111,35 @@ describe('historical backfill guidance', () => {
       expect(screen.getByRole('status')).toHaveTextContent(feedback)
     },
   )
+
+  it('hides Abstinence bulk actions in a discreet history menu', async () => {
+    const user = userEvent.setup()
+    renderBulkDayActions({ completionMode: 'abstinence' })
+
+    expect(
+      screen.queryByRole('button', { name: 'Mark all eligible dates' }),
+    ).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'History tools' }))
+    await user.click(
+      screen.getByRole('menuitem', {
+        name: 'Mark unreviewed days on track',
+      }),
+    )
+
+    expect(
+      screen.getByRole('dialog', { name: 'Mark 18 days on track?' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(/Existing setback entries remain unchanged/i),
+    ).toBeInTheDocument()
+  })
 })
 
-function renderBulkDayActions() {
+function renderBulkDayActions(overrides: Partial<Tracker> = {}) {
   render(
     createElement(BulkDayActions, {
-      tracker,
+      tracker: { ...tracker, ...overrides },
       completedDates: new Set(['2026-08-03', '2026-08-04']),
       badDates: new Set(['2026-08-05']),
       today: '2026-08-24',

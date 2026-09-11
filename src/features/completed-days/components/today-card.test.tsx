@@ -41,20 +41,23 @@ beforeEach(() => {
   vi.clearAllMocks()
 })
 
-describe('TodayCard bad-day transitions', () => {
-  it('marks the current abstinence day bad immediately while Good is disabled', async () => {
+describe('TodayCard Abstinence day editor', () => {
+  it('keeps today discreet and allows a setback while On track is disabled', async () => {
     const user = userEvent.setup()
     renderCard(new Set())
 
-    expect(
-      screen.getByRole('button', {
-        name: /can be marked good after the day ends/i,
-      }),
-    ).toBeDisabled()
+    expect(screen.getByText('In progress')).toBeInTheDocument()
+    expect(screen.queryByText('Setback')).not.toBeInTheDocument()
 
     await user.click(
-      screen.getByRole('button', { name: /mark .*24.* as bad/i }),
+      screen.getByRole('button', {
+        name: /open .*24.* entry, in progress/i,
+      }),
     )
+
+    expect(screen.getByRole('button', { name: /^On track/ })).toBeDisabled()
+
+    await user.click(screen.getByRole('button', { name: /^Setback/ }))
 
     expect(markBad).toHaveBeenCalledWith(
       { trackerId: 'tracker_1', date: '2026-08-24' },
@@ -62,36 +65,42 @@ describe('TodayCard bad-day transitions', () => {
     )
   })
 
-  it('confirms before unmarking a bad day', async () => {
+  it('confirms before clearing a setback entry', async () => {
     const user = userEvent.setup()
     renderCard(new Set(['2026-08-24']))
 
     await user.click(
-      screen.getByRole('button', { name: /unmark .*24.* as bad/i }),
+      screen.getByRole('button', {
+        name: /open .*24.* entry, setback recorded/i,
+      }),
     )
+    await user.click(screen.getByRole('button', { name: 'Clear entry' }))
     expect(
-      screen.getByRole('dialog', { name: 'Unmark this bad day?' }),
+      screen.getByRole('dialog', { name: 'Clear this entry?' }),
     ).toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: 'Unmark bad' }))
+    await user.click(screen.getByRole('button', { name: 'Clear entry' }))
     expect(unmarkBad).toHaveBeenCalledWith(
       { trackerId: 'tracker_1', date: '2026-08-24' },
       expect.any(Object),
     )
   })
 
-  it('confirms and sends replaceBad when a finished bad day becomes good', async () => {
+  it('confirms and sends replaceBad when a setback becomes on track', async () => {
     const user = userEvent.setup()
     renderCard(new Set(['2026-08-23']))
 
     await user.click(
-      screen.getByRole('button', { name: /mark .*23.* as good/i }),
+      screen.getByRole('button', {
+        name: /open .*23.* entry, setback recorded/i,
+      }),
     )
+    await user.click(screen.getByRole('button', { name: /^On track/ }))
     expect(
-      screen.getByRole('dialog', { name: 'Change this day to good?' }),
+      screen.getByRole('dialog', { name: 'Change this entry?' }),
     ).toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: 'Mark as good' }))
+    await user.click(screen.getByRole('button', { name: 'Change to on track' }))
     expect(markGood).toHaveBeenCalledWith(
       {
         trackerId: 'tracker_1',

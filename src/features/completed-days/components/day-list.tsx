@@ -2,15 +2,15 @@ import { useState } from 'react'
 import { useIsMutating } from '@tanstack/react-query'
 import { isPerfectClosedMonth } from '../streaks'
 import { canMarkOn, resolveDayState } from '../../trackers/daily-status'
-import { BadDayChangeDialog, DayStatusActions } from './day-status-actions'
+import {
+  AbstinenceDayMarker,
+  useAbstinenceDayEditor,
+} from './day-status-actions'
 import type { DayState } from '../../trackers/daily-status'
-import type { BadDayChange } from './day-status-actions'
 import type { Tracker } from '@/types/trackers'
 import {
   COMPLETED_DAY_MUTATION_KEY,
-  useMarkBadDayMutation,
   useMarkCompletedDayMutation,
-  useUnmarkBadDayMutation,
   useUnmarkCompletedDayMutation,
 } from '@/lib/app/trackers'
 import {
@@ -62,12 +62,9 @@ export function DayList({
   onError,
 }: DayListProps) {
   const [visibleCount, setVisibleCount] = useState(INITIAL_BATCH)
-  const [badDayChange, setBadDayChange] = useState<BadDayChange | null>(null)
-  const [dialogError, setDialogError] = useState<string | null>(null)
   const markMutation = useMarkCompletedDayMutation()
   const unmarkMutation = useUnmarkCompletedDayMutation()
-  const markBadMutation = useMarkBadDayMutation()
-  const unmarkBadMutation = useUnmarkBadDayMutation()
+  const abstinenceEditor = useAbstinenceDayEditor(tracker.id)
   const isCompletionPending =
     useIsMutating({ mutationKey: COMPLETED_DAY_MUTATION_KEY }) > 0
 
@@ -81,13 +78,7 @@ export function DayList({
   const yearGroups = groupDaysByCalendar(visibleDays)
   const remainingCount = totalDays - visibleDays.length
 
-  const toggleGood = (date: string, isCompleted: boolean, isBad: boolean) => {
-    if (isBad) {
-      setDialogError(null)
-      setBadDayChange({ date, action: 'mark-good' })
-      return
-    }
-
+  const toggleGood = (date: string, isCompleted: boolean) => {
     const mutation = isCompleted ? unmarkMutation : markMutation
     mutation.mutate(
       { trackerId: tracker.id, date },
@@ -95,49 +86,6 @@ export function DayList({
         onError: () =>
           onError('The change could not be saved. Please try again.'),
       },
-    )
-  }
-
-  const toggleBad = (date: string, isBad: boolean) => {
-    if (isBad) {
-      setDialogError(null)
-      setBadDayChange({ date, action: 'unmark-bad' })
-      return
-    }
-
-    markBadMutation.mutate(
-      { trackerId: tracker.id, date },
-      {
-        onError: () =>
-          onError('The change could not be saved. Please try again.'),
-      },
-    )
-  }
-
-  const confirmBadDayChange = () => {
-    if (!badDayChange) return
-    setDialogError(null)
-    const options = {
-      onSuccess: () => setBadDayChange(null),
-      onError: () =>
-        setDialogError('The change could not be saved. Please try again.'),
-    }
-
-    if (badDayChange.action === 'mark-good') {
-      markMutation.mutate(
-        {
-          trackerId: tracker.id,
-          date: badDayChange.date,
-          replaceBad: true,
-        },
-        options,
-      )
-      return
-    }
-
-    unmarkBadMutation.mutate(
-      { trackerId: tracker.id, date: badDayChange.date },
-      options,
     )
   }
 
@@ -218,7 +166,7 @@ export function DayList({
                           badDates={badDates}
                           today={today}
                           onToggleGood={toggleGood}
-                          onToggleBad={toggleBad}
+                          onOpenAbstinenceDay={abstinenceEditor.openDay}
                           index={month.startIndex + index}
                           isBusy={isCompletionPending}
                         />
@@ -249,13 +197,7 @@ export function DayList({
         {totalDays.toLocaleString()} days since {tracker.startDate}.
       </p>
 
-      <BadDayChangeDialog
-        change={badDayChange}
-        isPending={markMutation.isPending || unmarkBadMutation.isPending}
-        error={dialogError}
-        onConfirm={confirmBadDayChange}
-        onClose={() => setBadDayChange(null)}
-      />
+      {abstinenceEditor.editor}
     </section>
   )
 }
@@ -298,13 +240,18 @@ function DayRow({
   badDates,
   today,
   onToggleGood,
-  onToggleBad,
+  onOpenAbstinenceDay,
   index,
   isBusy,
 }: Omit<DayListProps, 'onError'> & {
   date: string
-  onToggleGood: (date: string, isCompleted: boolean, isBad: boolean) => void
-  onToggleBad: (date: string, isBad: boolean) => void
+  onToggleGood: (date: string, isCompleted: boolean) => void
+  onOpenAbstinenceDay: (selection: {
+    date: string
+    isOnTrack: boolean
+    isSetback: boolean
+    canMarkOnTrack: boolean
+  }) => void
   index: number
   isBusy: boolean
 }) {
@@ -339,6 +286,21 @@ function DayRow({
   ) : null
 
   if (tracker.completionMode === 'abstinence') {
+    const preciseState =
+      state === 'completed'
+        ? 'on track'
+        : state === 'bad'
+          ? 'setback recorded'
+          : state === 'unavailable'
+            ? 'in progress'
+            : 'unreviewed'
+    const visibleState =
+      state === 'completed' || state === 'bad'
+        ? 'Reviewed'
+        : state === 'unavailable'
+          ? 'In progress'
+          : 'Ready to review'
+
     return (
       <li
         className="animate-fade-in-up"
@@ -347,66 +309,36 @@ function DayRow({
           animationFillMode: 'backwards',
         }}
       >
-        <div
+        <button
+          type="button"
+          disabled={isBusy}
+          onClick={() =>
+            onOpenAbstinenceDay({
+              date,
+              isOnTrack: isCompleted,
+              isSetback: isBad,
+              canMarkOnTrack: canMarkOn(tracker.completionMode, today, date),
+            })
+          }
+          aria-label={`Open ${formatDayListLabel(date, today)} entry, ${preciseState}`}
           className={cn(
-            'flex flex-col gap-3 rounded-2xl border px-4 py-3 transition-colors sm:flex-row sm:items-center',
-            state === 'completed' && 'border-sage-200 bg-sage-50/70',
-            state === 'bad' && 'border-error-200 bg-error-50/70',
-            (state === 'completable' || state === 'unavailable') &&
-              'border-earth-100 bg-white',
+            'group flex w-full items-center gap-4 rounded-xl border border-transparent bg-white/65 px-4 py-3 text-left transition-all focus-ring',
+            'hover:border-earth-200 hover:bg-white hover:shadow-xs',
+            isBusy && 'cursor-wait opacity-60',
           )}
         >
-          <div className="flex min-w-0 flex-1 items-center gap-3">
-            <span
-              aria-hidden="true"
-              className={cn(
-                'grid size-7 shrink-0 place-items-center rounded-full border-2',
-                state === 'completed' &&
-                  'border-sage-500 bg-sage-500 text-white',
-                state === 'bad' && 'border-error-500 bg-error-500 text-white',
-                (state === 'completable' || state === 'unavailable') &&
-                  'border-earth-300 bg-white',
-              )}
-            >
-              {state === 'completed' ? <CheckMark /> : null}
-              {state === 'bad' ? <CrossMark /> : null}
+          <AbstinenceDayMarker state={state} />
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-sm font-semibold text-earth-800">
+              {formatDayListLabel(date, today)}
             </span>
-
-            <span className="min-w-0 flex-1">
-              <span
-                className={cn(
-                  'block truncate text-sm font-medium',
-                  state === 'completed' && 'text-sage-900',
-                  state === 'bad' && 'text-error-700',
-                  (state === 'completable' || state === 'unavailable') &&
-                    'text-earth-800',
-                )}
-              >
-                {formatDayListLabel(date, today)}
-              </span>
-              <span className="mt-0.5 block text-xs text-earth-400">
-                {state === 'completed'
-                  ? 'Good day'
-                  : state === 'bad'
-                    ? 'Marked bad'
-                    : state === 'unavailable'
-                      ? 'Good becomes available after the day ends'
-                      : 'Not marked'}
-              </span>
+            <span className="mt-0.5 block text-xs text-earth-400">
+              {visibleState}
             </span>
-            {relativeBadge}
-          </div>
-
-          <DayStatusActions
-            date={date}
-            isGood={isCompleted}
-            isBad={isBad}
-            canMarkGood={canMarkOn(tracker.completionMode, today, date)}
-            isBusy={isBusy}
-            onGood={() => onToggleGood(date, isCompleted, isBad)}
-            onBad={() => onToggleBad(date, isBad)}
-          />
-        </div>
+          </span>
+          {relativeBadge}
+          <ChevronRightIcon />
+        </button>
       </li>
     )
   }
@@ -424,7 +356,7 @@ function DayRow({
         role="checkbox"
         aria-checked={isCompleted}
         disabled={state === 'unavailable' || isBusy}
-        onClick={() => onToggleGood(date, isCompleted, false)}
+        onClick={() => onToggleGood(date, isCompleted)}
         aria-label={
           state === 'unavailable'
             ? `${formatDayListLabel(date, today)} is unavailable until the day ends`
@@ -494,14 +426,20 @@ function CheckMark() {
   )
 }
 
-function CrossMark() {
+function ChevronRightIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" className="size-4" aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      className="size-4 shrink-0 text-earth-400 transition-transform group-hover:translate-x-0.5"
+      aria-hidden="true"
+    >
       <path
-        d="m7 7 10 10M17 7 7 17"
+        d="m9 6 6 6-6 6"
         stroke="currentColor"
-        strokeWidth="3"
+        strokeWidth="1.8"
         strokeLinecap="round"
+        strokeLinejoin="round"
       />
     </svg>
   )
