@@ -6,7 +6,7 @@ import viteReact from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { tanstackRouter } from '@tanstack/router-plugin/vite'
 
-const DEV_SERVER_PORT = 5173
+const DEV_SERVER_PORT = 3005
 
 /**
  * Cloudflare tunnels (and other public hosts) forward Origin/Referer as the
@@ -72,7 +72,9 @@ export default defineConfig(({ mode }) => {
         : {}),
     },
     plugins: [
-      devtools(),
+      devtools({
+        eventBusConfig: { port: 42070 },
+      }),
       tanstackRouter({
         target: 'react',
         autoCodeSplitting: true,
