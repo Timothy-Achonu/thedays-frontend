@@ -6,7 +6,9 @@ description: >-
   explaining anything the user asked about — code, systems, architecture,
   plans, product behavior, workflows, debugging, concepts, tradeoffs, or how
   a decision fits together — not only source code and not as labeled
-  translation.
+  translation. Anticipate likely follow-up questions, explain why an approach
+  exists and when alternatives suffice, and restore the original context of
+  quoted follow-up questions.
 ---
 
 Whenever you are explaining, teaching, or answering a how/why/what question —
@@ -74,6 +76,61 @@ as part of helping the user understand — not to score points.
 explaining an answer the user already asked for. Pre-implementation
 adversarial review of a feature or architecture idea belongs in `grill-me`,
 not here.
+
+## Anticipate the reader's questions before they have to ask
+
+Do not wait for the reader to discover an obvious gap in the explanation.
+Before answering, mentally argue with your own account from the perspective
+of a curious, skeptical reader who wants to understand the mechanism and the
+reason it exists, not memorize a rule. Use the question and available
+conversation context to predict *plausible* sticking points, especially:
+
+* **What is this, exactly?** Define the concept, the relevant terms, and its
+  scope. Distinguish similar-sounding terms when confusing them would alter
+  the answer.
+* **Why does this exist at all?** Identify the problem that motivated it.
+  What becomes harder, incorrect, less precise, or impossible without it?
+* **Why this approach and not the obvious substitute?** Ask whether a simpler
+  existing construct, feature, pattern, or direct implementation already
+  does the job. Compare them on a concrete example. If the substitute works
+  equally well here, explicitly say so; do not manufacture a justification.
+* **How does it actually work?** Follow the relevant sequence, types, inputs,
+  outputs, guarantees, and runtime behavior instead of relying on labels.
+* **But didn't you just say the opposite?** Test whether two statements in
+  your explanation seem inconsistent. State the missing distinction or
+  condition that makes both true, or correct the earlier claim.
+* **What if I change one detail?** Test a boundary case: a different input,
+  a missing argument, a different return type, an error path, or a surprising
+  interaction with the previous example. Show where the rule stops applying.
+* **How do we know?** Separate what a type declaration or specification
+  promises from what the actual implementation guarantees. Do not claim
+  compile-time checking proves runtime behavior, or vice versa.
+
+Answer the likely, *material* questions at the point they naturally arise,
+inside the normal technical-to-everyday weave. A good explanation should
+resolve the first objections a thoughtful reader would raise after each
+example, rather than making them interrupt to ask for the missing logic.
+
+Forecast questions based on actual tensions in the topic, not an imaginary
+list of everything anyone might ask. Prioritize the questions that challenge
+the point of the concept, expose a hidden assumption, or would prevent the
+reader from accepting the next step. Do not bolt on a mechanical FAQ after
+every section, bury the direct answer under speculation, or introduce
+advanced prerequisites before they are useful. When something is genuinely
+subtle, show one targeted counterexample or comparison rather than repeating
+the same explanation in new words.
+
+For example, if teaching TypeScript overloads, an explanation that first
+shows two string/number overloads with the same return type should
+immediately address: "Why not use `string | number` in one parameter?"
+Acknowledge that the union is preferable *in that example*, then demonstrate
+where overloads add information, such as tying one input type to a distinct
+return type or enforcing different argument-count combinations. Also explain
+that the implementation signature must be compatible with the overloads,
+not textually identical to them, and that TypeScript's type checks do not
+prove the implementation fulfills every promised input-output relationship.
+The point is the questioning habit, not a requirement to always discuss
+TypeScript.
 
 ## Core explanation: weave, do not label
 
@@ -174,6 +231,45 @@ beat when needed.
 * If the user references a beat number while asking a **new question**, answer
   the question normally — the number is context, not a continuation protocol.
 
+## Quoted follow-ups: restore the surrounding context
+
+When the user quotes, paraphrases, screenshots, or points to something the
+agent said earlier and asks a question about it, **treat the original
+explanation as the context of the question**, not the quoted sentence as an
+isolated new topic. The reader may have forgotten what the original question
+was, why the example was introduced, or what was established immediately
+before the quoted passage.
+
+Before giving the new answer:
+
+1. Identify the original subject or problem and what the earlier explanation
+   was trying to establish. Consult available conversation or source context
+   as needed; do not guess at missing turns.
+2. Briefly rebuild the specific setup required to understand the quotation:
+   the earlier question, relevant example, definitions, assumptions, and the
+   distinction the original passage was making. Explain why the quoted line
+   appeared in that discussion.
+3. Connect the user's present objection to that setup, then answer it
+   directly. Carry over unchanged constraints and terminology. If the prior
+   claim was misleading or wrong, acknowledge and correct it.
+4. Restore **enough** context to make the reply understandable on its own,
+   not a full recap of the previous answer. If the original context cannot
+   be recovered, say what is known from the quote and ask for the missing
+   part only if essential.
+
+For instance, if an earlier overload explanation said "the implementation
+signature is not callable," and the user later asks why an implementation
+parameter may be optional, first remind them that callers match *overload
+signatures* while the single implementation must accommodate those allowed
+calls. Then explain why an optional parameter in the implementation does
+not create a new two-argument overload. Without the earlier distinction,
+the answer may be technically correct but feel disconnected from the
+question the reader is actually trying to resolve.
+
+This contextual restoration applies whether the user quotes one sentence,
+a code block, a beat number, or a fragment of a much longer past answer.
+Follow the existing numbered-beat and conversational rules while doing it.
+
 ## Processes and system behavior
 
 Explain cause and effect step-by-step. For each meaningful step, use the
@@ -200,6 +296,17 @@ For every important design or behavior, explain the problem it solves, why
 it exists, why the chosen approach is preferred, what tradeoffs it
 introduces, what risks exist, and how an alternative would behave
 differently. Weave each point: technical, then everyday.
+
+Make the comparison with substitutes explicit when the reader could
+reasonably ask "Why not just use X?" Compare the simplest reasonable
+alternative before escalating to a more specialized or elaborate tool.
+Show a concrete case where both approaches behave the same, then (if one
+exists) a case that exposes the meaningful difference. Specify whether the
+difference concerns correctness, expressiveness, safety, runtime behavior,
+maintenance, performance, or merely preference. If there is no meaningful
+advantage in the present example, admit it and recommend the simpler option.
+Do not confuse "can be used" with "must be used" or "helps in some cases"
+with "is always better."
 
 Whenever introducing a wrapper, service, hook, adapter, layer, utility,
 queue, pipeline, middleware, orchestration mechanism, or event system,
@@ -252,6 +359,13 @@ failures, bottlenecks, coupling, or increasing complexity may appear.
   at the depth the mode above calls for.
 * Number concept-sized beats as reading bookmarks (see **Numbered beats**
   above). Numbering is required; nested vs flat style is not.
+* Before finishing, check whether the explanation answers **what it is,
+  why it exists, how it works, why not the obvious alternative, what changes
+  at the edges, and which claims need qualifications**. Cover the relevant
+  questions in the prose rather than pasting in a checklist.
+* If the user quoted an earlier reply, check that the answer reconstructs
+  the original setup and the purpose of that quoted passage before resolving
+  the new question. Never invent missing prior context.
 
 ## Example
 
@@ -318,3 +432,14 @@ second angle):
   then `1.5`)
 * Treating beat numbers as agent continuation commands (skipping, recapping,
   or inventing prior beats) instead of reader scroll anchors
+* Explaining syntax or behavior without asking why the concept is needed
+  when an existing, simpler substitute seems to achieve the same result
+* Presenting a contrived example as proof that a more complex abstraction
+  is useful when the example works equally well without it
+* Waiting for the reader to flag an obvious contradiction, limitation, or
+  edge case that should have been explained alongside the original claim
+* Attaching exhaustive speculative FAQs instead of answering the few
+  questions that materially advance understanding
+* Answering a quoted fragment in isolation, forcing the reader to remember
+  or reconstruct the original topic and purpose of the passage
+* Reconstructing previous context from invention when that context is missing
