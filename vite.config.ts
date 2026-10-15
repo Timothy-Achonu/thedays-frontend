@@ -5,8 +5,7 @@ import { devtools } from '@tanstack/devtools-vite'
 import viteReact from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { tanstackRouter } from '@tanstack/router-plugin/vite'
-// import type { IncomingMessage } from 'node:http'
-// import type { ProxyOptions } from 'vite'
+import type { ProxyOptions } from 'vite'
 
 const DEV_SERVER_PORT = 3005
 
@@ -23,15 +22,7 @@ function rewriteProxyOriginHeaders(
   proxyReq.setHeader('Referer', `${trustedOrigin}/`)
 }
 
-type ProxyRequest = {
-  setHeader: (name: string, value: string) => void
-}
-type IncomingRequest = {
-  headers: Record<string, string | Array<string> | undefined>
-}
-// type IncomingRequest = {
-//   headers: Record<string, string>
-// }
+
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
@@ -48,32 +39,11 @@ export default defineConfig(({ mode }) => {
     )
   }
 
-  const configureTrustedOrigin = (proxy: {
-    on: (
-      event: 'proxyReq',
-      listener: (proxyReq: ProxyRequest, req: IncomingRequest) => void,
-    ) => void
-  }) => {
-    proxy.on('proxyReq', (proxyReq, req) => {
-      console.log('Incoming browser Origin:', req.headers.origin)
-      console.log('Incoming browser Referer:', req.headers.referer)
+  const configureTrustedOrigin: NonNullable<ProxyOptions['configure']> = (proxy) => {
+    proxy.on('proxyReq', (proxyReq) => {
       rewriteProxyOriginHeaders(proxyReq, trustedProxyOrigin)
     })
-    // proxy.on('proxyReq', (proxyReq) => {
-    //   rewriteProxyOriginHeaders(proxyReq, trustedProxyOrigin)
-    // })
   }
-
-  // const configureTrustedOrigin: NonNullable<ProxyOptions['configure']> = (proxy) => {
-  //   proxy.on('proxyReq', (proxyReq, req) => {
-  //     console.log('Incoming browser Origin:', req.headers.origin)
-  //     console.log('Incoming browser Referer:', req.headers.referer)
-  //     rewriteProxyOriginHeaders(proxyReq, trustedProxyOrigin)
-  //   })
-  //   // proxy.on('proxyReq', (proxyReq) => {
-  //   //   rewriteProxyOriginHeaders(proxyReq, trustedProxyOrigin)
-  //   // })
-  // }
 
   return {
     test: {
