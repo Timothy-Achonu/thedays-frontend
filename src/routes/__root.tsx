@@ -6,8 +6,8 @@ import { TanStackDevtools } from '@tanstack/react-devtools'
 import TanStackQueryDevtools from '../integrations/tanstack-query/devtools'
 import type { QueryClient } from '@tanstack/react-query'
 
-import { GlobalError } from '@/components/global-error'
-import { NotFound } from '@/components/not-found'
+import { GlobalError } from '@/components/routing/global-error'
+import { NotFound } from '@/components/routing/not-found'
 import { ROUTES } from '@/lib/constants/routes'
 import { SESSION_STATE_STORAGE_KEY } from '@/lib/auth/session-state'
 

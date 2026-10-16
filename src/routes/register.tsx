@@ -9,7 +9,7 @@ import {
   PasswordInput,
   TimezoneSelect,
 } from '@/components/ui'
-import { GoogleSignIn } from '@/components/auth/google-sign-in'
+import { GoogleSignIn } from '@/features/auth/components/google-sign-in'
 import { ROUTES } from '@/lib/constants/routes'
 import { useRegisterMutation, verifyEmailPath } from '@/lib/app/auth'
 import { requireGuest } from '@/lib/auth/guards'

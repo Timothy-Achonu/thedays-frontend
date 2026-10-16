@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { Outlet } from '@tanstack/react-router'
 import { useQueryClient } from '@tanstack/react-query'
-import { AuthenticatedGate } from '@/components/auth/authenticated-gate'
+import { AuthenticatedGate } from '@/features/auth/components/authenticated-gate'
 import {
   AUTH_USER_QUERY_KEY,
   useCurrentUserQuery,
@@ -9,7 +9,7 @@ import {
 import { isUnauthorizedError } from '@/lib/auth/guards'
 import { markSessionSignedOut } from '@/lib/auth/session-state'
 import { ROUTES } from '@/lib/constants/routes'
-import { AppShell } from '@/components/app-shell'
+import { AppShell } from '@/layouts/app-shell'
 
 export function AuthenticatedLayout() {
   const queryClient = useQueryClient()

@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
-import { TimezoneMismatchBanner } from '@/components/timezone-mismatch-banner'
+import { TimezoneMismatchBanner } from './timezone-mismatch-banner'
 import { useCurrentUserQuery } from '@/lib/app/auth'
 import { useDashboardSummaryQuery } from '@/lib/app/dashboard'
 import { ROUTES } from '@/lib/constants/routes'

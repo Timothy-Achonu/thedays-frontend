@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ReactNode } from 'react'
 import type { DashboardSummaryResponse } from '@/types/dashboard'
-import { DashboardPage } from '@/components/dashboard-page'
+import { DashboardPage } from './dashboard-page'
 
 const { currentUserQuery, summaryQuery } = vi.hoisted(() => ({
   currentUserQuery: {
@@ -34,7 +34,7 @@ vi.mock('@/lib/app/dashboard', () => ({
   useDashboardSummaryQuery: () => summaryQuery,
 }))
 
-vi.mock('@/components/timezone-mismatch-banner', () => ({
+vi.mock('./timezone-mismatch-banner', () => ({
   TimezoneMismatchBanner: () => null,
 }))
 
